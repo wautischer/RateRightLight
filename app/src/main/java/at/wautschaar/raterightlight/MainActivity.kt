@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -27,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
@@ -36,10 +38,17 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import at.wautschaar.raterightlight.ui.theme.RateRightLightTheme
 
+object Destinations {
+    const val MY_LIST_ROUTE = "MyList"
+    const val HOME_ROUTE = "Home"
+    const val SETTINGS_ROUTE = "Settings"
+}
+
 data class BottomNavigationItem(
     val title: String,
     val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector
+    val unselectedIcon: ImageVector,
+    val onItemClick: () -> Unit
 )
 
 class MainActivity : ComponentActivity() {
@@ -47,22 +56,45 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+
+            val navController = rememberNavController()
+            NavHost(navController, startDestination = Destinations.HOME_ROUTE) {
+                composable(Destinations.MY_LIST_ROUTE) {
+                    MyList()
+                }
+                composable(Destinations.HOME_ROUTE) {
+                    Home()
+                }
+                composable(Destinations.SETTINGS_ROUTE) {
+                    Settings()
+                }
+            }
+
             RateRightLightTheme {
                 val items = listOf(
                     BottomNavigationItem(
                         title = "MyList",
                         selectedIcon = Icons.Filled.List,
-                        unselectedIcon = Icons.Outlined.List
+                        unselectedIcon = Icons.Outlined.List,
+                        onItemClick = {
+                            navController.navigate(Destinations.MY_LIST_ROUTE)
+                        }
                     ),
                     BottomNavigationItem(
                         title = "Home",
                         selectedIcon = Icons.Filled.Home,
-                        unselectedIcon = Icons.Outlined.Home
+                        unselectedIcon = Icons.Outlined.Home,
+                        onItemClick = {
+                            navController.navigate(Destinations.HOME_ROUTE)
+                        }
                     ),
                     BottomNavigationItem(
                         title = "Settings",
                         selectedIcon = Icons.Filled.Settings,
-                        unselectedIcon = Icons.Outlined.Settings
+                        unselectedIcon = Icons.Outlined.Settings,
+                        onItemClick = {
+                            navController.navigate(Destinations.SETTINGS_ROUTE)
+                        }
                     )
                 )
                 var selectedItemIndex by rememberSaveable {
@@ -72,7 +104,6 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MyApp()
                     Scaffold(
                         bottomBar = {
                             NavigationBar {
@@ -81,7 +112,11 @@ class MainActivity : ComponentActivity() {
                                         selected = selectedItemIndex == index,
                                         onClick = {
                                             selectedItemIndex = index
-                                            //  navController.navigate(item.title)
+                                            when (index) {
+                                                0 -> navController.navigate(Destinations.MY_LIST_ROUTE)
+                                                1 -> navController.navigate(Destinations.HOME_ROUTE)
+                                                2 -> navController.navigate(Destinations.SETTINGS_ROUTE)
+                                            }
                                         },
                                         label = {
                                                 Text(text = item.title)
@@ -108,92 +143,36 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MyApp() {
-    val navController = rememberNavController()
-
-    NavHost(navController, startDestination = "HomePage") {
-        composable("HomePage") {
-            HomePage(navController)
-        }
-        composable("DetailsPage") {
-            DetailPage(navController)
-        }
-        composable("MyListPage") {
-            MyListPage(navController)
-        }
-    }
+fun Home() {
+        Text(text = "Home")
 }
 
 @Composable
-fun HomePage(navController: NavHostController) {
-    Surface {
-        Column {
-            Text(text = "HomePage")
-            Button(
-                onClick = { navController.navigate("DetailsPage") },
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text("View Details")
-            }
+fun MyList() {
+        Text(text = "MyList")
+}
 
-            Button(
-                onClick = { navController.navigate("MyListPage") },
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text("My List")
-            }
-        }
-    }
+@Composable
+fun Detail() {
 
 }
 
 @Composable
-fun DetailPage(navController: NavHostController) {
-    Surface {
-        Column {
-            Text(text = "Details")
-            Button(
-                onClick = { navController.navigate("HomePage") },
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text("Home")
-            }
-        }
-    }
+fun RecentlyWatched() {
 
 }
 
 @Composable
-fun MyListPage(navController: NavHostController) {
-    Surface {
-        Column {
-            Text(text = "My List")
-            Button(
-                onClick = { navController.navigate("HomePage") },
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text("Home")
-            }
-        }
-    }
-}
-
-@Composable
-fun RecentlyWatchedPage(navController: NavHostController) {
+fun RecommendedForYou() {
 
 }
 
 @Composable
-fun RecommendedForYouPage(navController: NavHostController) {
+fun News() {
 
 }
 
 @Composable
-fun NewsPage(navController: NavHostController) {
-
-}
-
-@Composable
-fun SettingsPage(navController: NavHostController) {
-
+fun Settings() {
+        Text(text = "Settings")
 }
