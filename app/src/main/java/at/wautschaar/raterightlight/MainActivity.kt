@@ -40,42 +40,89 @@ class MainActivity : ComponentActivity() {
 fun MyApp() {
     val navController = rememberNavController()
 
-    NavHost(navController, startDestination = "Screen1") {
-        composable("Screen1") {
-            Screen1(navController)
+    NavHost(navController, startDestination = "HomePage") {
+        composable("HomePage") {
+            HomePage(navController)
         }
-        composable("Screen2") {
-            Screen2(navController)
+        composable("DetailsPage") {
+            DetailPage(navController)
+        }
+        composable("MyListPage") {
+            MyListPage(navController)
         }
     }
 }
 
 @Composable
-fun Screen1(navController: NavHostController) {
+fun HomePage(navController: NavHostController){
     Surface {
         Column {
-            Text(text = "Screen 1")
+            Text(text = "HomePage")
             Button(
-                onClick = { navController.navigate("Screen2") },
+                onClick = { navController.navigate("DetailsPage") },
                 modifier = Modifier.padding(16.dp)
             ) {
-                Text("Go to Screen 2")
+                Text("View Details")
+            }
+
+            Button(
+                onClick = { navController.navigate("MyListPage") },
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text("My List")
+            }
+        }
+    }
+
+}
+
+@Composable
+fun DetailPage(navController: NavHostController){
+    Surface {
+        Column {
+            Text(text = "Details")
+            Button(
+                onClick = { navController.navigate("HomePage") },
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text("Home")
+            }
+        }
+    }
+
+}
+
+@Composable
+fun MyListPage(navController: NavHostController){
+    Surface {
+        Column {
+            Text(text = "My List")
+            Button(
+                onClick = { navController.navigate("HomePage") },
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text("Home")
             }
         }
     }
 }
 
 @Composable
-fun Screen2(navController: NavHostController) {
-    Surface {
-        Column {
-            Text(text = "Screen 2")
-            Button(
-                onClick = { navController.navigate("Screen1") },
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text("Go to Screen 1")
-            }
-        }
-    }
+fun RecentlyWatchedPage(navController: NavHostController){
+
+}
+
+@Composable
+fun RecommendedForYouPage(navController: NavHostController){
+
+}
+
+@Composable
+fun NewsPage(navController: NavHostController){
+
+}
+
+@Composable
+fun SettingsPage(navController: NavHostController){
+
 }
