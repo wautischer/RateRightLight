@@ -2,6 +2,7 @@ package at.wautschaar.raterightlight;
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +26,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -97,8 +99,8 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 )
-                var selectedItemIndex by rememberSaveable {
-                    mutableStateOf(1)
+                var selectedItemIndex: Int by rememberSaveable {
+                    mutableIntStateOf(1)
                 }
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -119,7 +121,7 @@ class MainActivity : ComponentActivity() {
                                             }
                                         },
                                         label = {
-                                                Text(text = item.title)
+                                            Text(text = item.title)
                                         },
                                         icon = {
                                             Icon(
@@ -144,13 +146,45 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Home() {
-        Text(text = "Home")
+    Log.d("Home", "Home composable loaded")
+    Surface(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = "Home")
+        }
+    }
 }
 
 @Composable
 fun MyList() {
-        Text(text = "MyList")
+    Log.d("MyList", "MyList composable loaded")
+    Surface(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = "MyList")
+        }
+    }
 }
+
+@Composable
+fun Settings() {
+    Surface(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = "Settings")
+        }
+    }
+}
+
 
 @Composable
 fun Detail() {
@@ -170,9 +204,4 @@ fun RecommendedForYou() {
 @Composable
 fun News() {
 
-}
-
-@Composable
-fun Settings() {
-        Text(text = "Settings")
 }
