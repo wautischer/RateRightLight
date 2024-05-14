@@ -44,7 +44,7 @@ class MainActivity : ComponentActivity() {
                                 description = bookItem.volumeInfo.description,
                                 publishedDate = bookItem.volumeInfo.publishedDate,
                                 pageCount = bookItem.volumeInfo.pageCount,
-                                categories = bookItem.volumeInfo.category,
+                                categories = bookItem.volumeInfo.categories,
                                 language = bookItem.volumeInfo.language,
                                 imageUrl = bookItem.volumeInfo.imageLinks.toString()
                             )
@@ -56,7 +56,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
 
 @Composable
 fun BookCard (book: Book, modifier: Modifier = Modifier) {
