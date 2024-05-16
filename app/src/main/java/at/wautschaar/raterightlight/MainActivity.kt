@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
                         mutableStateOf<List<Book>>(emptyList())
                     }
                     LaunchedEffect(Unit) {
-                        val bookResponse = API.retrofitService.getBooks("Berserk")
+                        val bookResponse = API.retrofitService.getBooks("berserk-max-")
                         bookListByName = bookResponse.items.map { bookItem ->
                             Book(
                                 id = bookItem.id,
