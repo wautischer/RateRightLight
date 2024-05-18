@@ -71,6 +71,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
@@ -78,6 +80,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.input.ImeAction
 import coil.compose.AsyncImage
 import coil.compose.rememberImagePainter
 
@@ -216,13 +219,11 @@ fun Searchbar() {
     val data by viewModel.data.collectAsState()
     val isSearching by viewModel.isSearching.collectAsState()
 
-    var isExpanded by remember { mutableStateOf(false) }
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(25.dp))
             .background(Color.White)
     ) {
         Column {
@@ -234,8 +235,7 @@ fun Searchbar() {
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 56.dp)
-                    .padding(start = 16.dp, end = 8.dp),
+                    .clip(RoundedCornerShape(25.dp)),
                 placeholder = {
                     Text(
                         text = "Search",
@@ -249,8 +249,19 @@ fun Searchbar() {
                         contentDescription = "Search",
                         tint = Color.Gray
                     )
-                }
-
+                },
+                trailingIcon = {
+                    if (searchText.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.onSearchTextChange("") }) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = "Clear",
+                                tint = Color.Gray
+                            )
+                        }
+                    }
+                },
+                singleLine = true
             )
 
             if(isSearching) {
@@ -270,7 +281,7 @@ fun Searchbar() {
                             text = "${item.title}",
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 16.dp)
+                                .padding(vertical = 10.dp)
                         )
                     }
                 }
