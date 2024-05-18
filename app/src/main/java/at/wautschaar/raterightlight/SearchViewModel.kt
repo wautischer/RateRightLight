@@ -23,7 +23,6 @@ class SearchViewModel: ViewModel(){
     private val _isSearching = MutableStateFlow(false)
     val isSearching = _isSearching.asStateFlow()
 
-    // Assuming the data is a list of some `Book` class
     private val _data = MutableStateFlow<List<Book>>(emptyList())
 
     val data = searchText
@@ -33,7 +32,7 @@ class SearchViewModel: ViewModel(){
             if (text.isBlank()) {
                 item
             } else {
-                delay(2000L)
+                delay(250L)
                 item.filter { it.doesMatchSearchQuery(text) }
             }
         }
