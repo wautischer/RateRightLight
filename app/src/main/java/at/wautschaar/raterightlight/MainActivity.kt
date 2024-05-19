@@ -3,6 +3,7 @@
 package at.wautschaar.raterightlight;
 
 import android.annotation.SuppressLint
+import android.app.appsearch.SearchResult
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -289,6 +290,9 @@ fun Searchbar() {
         }
     }
 }
+
+@Composable
+fun SearchResult() {}
 
 @Composable
 fun Home() {
