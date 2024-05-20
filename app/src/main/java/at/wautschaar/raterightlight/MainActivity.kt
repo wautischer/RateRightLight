@@ -215,6 +215,21 @@ fun Home(navController: NavController) {
 }
 
 @Composable
+fun MyList() {
+    Log.d("MyList", "MyList composable loaded")
+    Surface(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = "MyList")
+        }
+    }
+}
+
+
+@Composable
 fun Searchbar(navController: NavController) {
     val viewModel = viewModel<SearchViewModel>()
     val searchText by viewModel.searchText.collectAsState()
@@ -381,20 +396,6 @@ fun BookItem(book: Book) {
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun MyList() {
-    Log.d("MyList", "MyList composable loaded")
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(text = "MyList")
         }
     }
 }
