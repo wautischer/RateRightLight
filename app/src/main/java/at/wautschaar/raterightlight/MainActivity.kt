@@ -296,11 +296,16 @@ fun Searchbar(navController: NavController) {
 
 @Composable
 fun SearchResultPage(query: String, viewModel: SearchViewModel = viewModel()) {
+    Log.d("SearchResult", "SearchResult composable loaded")
     LaunchedEffect(query) {
         viewModel.fetchBooks(query)
     }
 
-    val searchResults by viewModel.data.collectAsState()
+    val searchResults by viewModel.searchResults.collectAsState()
+
+    searchResults.forEach { book ->
+        Log.d("SearchResult", "Book Title: ${book.title}")
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -332,7 +337,7 @@ fun SearchResultPage(query: String, viewModel: SearchViewModel = viewModel()) {
                     ) {
                         Text(text = book.title, style = MaterialTheme.typography.headlineMedium)
                         Text(
-                            text = book.authors.joinToString(),
+                            text = book.authors?.joinToString() ?: "unkown",
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
