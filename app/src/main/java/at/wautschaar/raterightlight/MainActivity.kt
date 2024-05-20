@@ -75,11 +75,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SearchBar
+import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
@@ -174,7 +177,7 @@ class MainActivity : ComponentActivity() {
                             composable(Destinations.SETTINGS_ROUTE) { Settings() }
                             composable("searchResult/{query}") { backStackEntry ->
                                 val query = backStackEntry.arguments?.getString("query") ?: ""
-                                SearchResultPage(query = query)
+                                SearchResultPage(query = query, navController = navController)
                             }
                         }
                     }
@@ -294,8 +297,13 @@ fun Searchbar(navController: NavController) {
     }
 }
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun SearchResultPage(query: String, viewModel: SearchViewModel = viewModel()) {
+fun SearchResultPage(
+    query: String,
+    navController: NavController,
+    viewModel: SearchViewModel = viewModel()
+) {
     Log.d("SearchResult", "SearchResult composable loaded")
     LaunchedEffect(query) {
         viewModel.fetchBooks(query)
@@ -303,50 +311,79 @@ fun SearchResultPage(query: String, viewModel: SearchViewModel = viewModel()) {
 
     val searchResults by viewModel.searchResults.collectAsState()
 
-    searchResults.forEach { book ->
-        Log.d("SearchResult", "Book Title: ${book.title}")
-    }
-
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        items(searchResults) { book ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                shape = RoundedCornerShape(8.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    AsyncImage(
-                        model = book.imageUrl,
-                        contentDescription = book.title,
-                        modifier = Modifier.size(100.dp),
-                        contentScale = ContentScale.Crop
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column(
-                        modifier = Modifier.align(Alignment.CenterVertically)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("$query") },
+                navigationIcon = {
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp)
+                            .clip(CircleShape)
+                            .background(Color.Black)
                     ) {
-                        Text(text = book.title, style = MaterialTheme.typography.headlineMedium)
-                        Text(
-                            text = book.authors?.joinToString() ?: "unkown",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                        IconButton(
+                            onClick = { navController.popBackStack() },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color.White
+                            )
+                        }
                     }
                 }
+            )
+        },
+        content = {
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                item {
+                    Spacer(modifier = Modifier.height(60.dp))
+                }
+                items(searchResults) { book ->
+                    BookItem(book = book)
+                }
+            }
+        }
+    )
+}
+
+
+
+@Composable
+fun BookItem(book: Book) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        shape = RoundedCornerShape(8.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            AsyncImage(
+                model = book.imageUrl,
+                contentDescription = book.title,
+                modifier = Modifier.size(100.dp),
+                contentScale = ContentScale.Crop
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(
+                modifier = Modifier.align(Alignment.CenterVertically)
+            ) {
+                Text(text = book.title, style = MaterialTheme.typography.headlineMedium)
+                Text(
+                    text = book.authors?.joinToString() ?: "unkown",
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
     }
 }
-
 
 @Composable
 fun MyList() {
