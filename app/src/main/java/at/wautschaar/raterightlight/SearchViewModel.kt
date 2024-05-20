@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class SearchViewModel: ViewModel(){
+class SearchViewModel: ViewModel() {
     private val _searchText = MutableStateFlow("")
     val searchText = _searchText.asStateFlow()
 
@@ -48,13 +48,17 @@ class SearchViewModel: ViewModel(){
 
     fun onSearchTextChange(text: String) {
         _searchText.value = text
+        _searchResults.value = emptyList()
+        _data.value = emptyList()
     }
 
+
     fun fetchBooks(query: String) {
+        Log.d("fetchBooks", "fetchBooks")
         viewModelScope.launch {
             try {
                 val response = API.retrofitService.getBooks(query)
-                _data.value = response.items.map { bookItem ->
+                val newData = response.items.map { bookItem ->
                     Book(
                         id = bookItem.id,
                         title = bookItem.volumeInfo.title,
@@ -67,7 +71,8 @@ class SearchViewModel: ViewModel(){
                         imageUrl = bookItem.volumeInfo.imageLinks?.thumbnail ?: ""
                     )
                 }
-                _searchResults.value = _data.value
+                _searchResults.value = newData // Update search results
+                _data.value = newData // Update all data in the ViewModel
                 Log.d("fetchBooks", "Books fetched: $response")
             } catch (e: Exception) {
                 Log.d("Search", "Something went wrong: ${e.message}")
