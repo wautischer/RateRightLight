@@ -71,17 +71,20 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.compose.rememberImagePainter
 
@@ -103,71 +106,51 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-
             val navController = rememberNavController()
-            NavHost(navController, startDestination = Destinations.HOME_ROUTE) {
-                composable(Destinations.MY_LIST_ROUTE) {
-                    MyList()
-                }
-                composable(Destinations.HOME_ROUTE) {
-                    Home()
-                }
-                composable(Destinations.SETTINGS_ROUTE) {
-                    Settings()
-                }
-            }
+            var selectedItemIndex by rememberSaveable { mutableIntStateOf(1) }
 
             RateRightLightTheme {
-                val items = listOf(
-                    BottomNavigationItem(
-                        title = "MyList",
-                        selectedIcon = Icons.Filled.List,
-                        unselectedIcon = Icons.Outlined.List,
-                        onItemClick = {
-                            navController.navigate(Destinations.MY_LIST_ROUTE)
-                        }
-                    ),
-                    BottomNavigationItem(
-                        title = "Home",
-                        selectedIcon = Icons.Filled.Home,
-                        unselectedIcon = Icons.Outlined.Home,
-                        onItemClick = {
-                            navController.navigate(Destinations.HOME_ROUTE)
-                        }
-                    ),
-                    BottomNavigationItem(
-                        title = "Settings",
-                        selectedIcon = Icons.Filled.Settings,
-                        unselectedIcon = Icons.Outlined.Settings,
-                        onItemClick = {
-                            navController.navigate(Destinations.SETTINGS_ROUTE)
-                        }
-                    )
-                )
-                var selectedItemIndex: Int by rememberSaveable {
-                    mutableIntStateOf(1)
-                }
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Scaffold(
                         bottomBar = {
+                            val items = listOf(
+                                BottomNavigationItem(
+                                    title = "MyList",
+                                    selectedIcon = Icons.Filled.List,
+                                    unselectedIcon = Icons.Outlined.List,
+                                    onItemClick = {
+                                        navController.navigate(Destinations.MY_LIST_ROUTE)
+                                    }
+                                ),
+                                BottomNavigationItem(
+                                    title = "Home",
+                                    selectedIcon = Icons.Filled.Home,
+                                    unselectedIcon = Icons.Outlined.Home,
+                                    onItemClick = {
+                                        navController.navigate(Destinations.HOME_ROUTE)
+                                    }
+                                ),
+                                BottomNavigationItem(
+                                    title = "Settings",
+                                    selectedIcon = Icons.Filled.Settings,
+                                    unselectedIcon = Icons.Outlined.Settings,
+                                    onItemClick = {
+                                        navController.navigate(Destinations.SETTINGS_ROUTE)
+                                    }
+                                )
+                            )
                             NavigationBar {
                                 items.forEachIndexed { index, item ->
                                     NavigationBarItem(
                                         selected = selectedItemIndex == index,
                                         onClick = {
                                             selectedItemIndex = index
-                                            when (index) {
-                                                0 -> navController.navigate(Destinations.MY_LIST_ROUTE)
-                                                1 -> navController.navigate(Destinations.HOME_ROUTE)
-                                                2 -> navController.navigate(Destinations.SETTINGS_ROUTE)
-                                            }
+                                            item.onItemClick()
                                         },
-                                        label = {
-                                            Text(text = item.title)
-                                        },
+                                        label = { Text(text = item.title) },
                                         icon = {
                                             Icon(
                                                 imageVector = if (index == selectedItemIndex) {
@@ -175,17 +158,23 @@ class MainActivity : ComponentActivity() {
                                                 } else item.unselectedIcon,
                                                 contentDescription = item.title
                                             )
-
-                                        })
+                                        }
+                                    )
                                 }
                             }
                         }
                     ) { innerPadding ->
-                        Surface(modifier = Modifier.fillMaxSize()) {
-                            when (selectedItemIndex) {
-                                0 -> MyList()
-                                1 -> Home()
-                                2 -> Settings()
+                        NavHost(
+                            navController = navController,
+                            startDestination = Destinations.HOME_ROUTE,
+                            modifier = Modifier.padding(innerPadding)
+                        ) {
+                            composable(Destinations.MY_LIST_ROUTE) { MyList() }
+                            composable(Destinations.HOME_ROUTE) { Home(navController) }
+                            composable(Destinations.SETTINGS_ROUTE) { Settings() }
+                            composable("searchResult/{query}") { backStackEntry ->
+                                val query = backStackEntry.arguments?.getString("query") ?: ""
+                                SearchResultPage(query = query)
                             }
                         }
                     }
@@ -196,25 +185,34 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun BookCard(book: Book, modifier: Modifier = Modifier) {
-    Card(modifier = Modifier) {
-        Column {
-            Text(text = book.title)
+fun Home(navController: NavController) {
+    Surface(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            Searchbar(navController)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Home",
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
         }
     }
 }
 
 @Composable
-fun BookList(books: List<Book>, modifier: Modifier = Modifier) {
-    LazyColumn(modifier = Modifier) {
-        items(books) { tempBook ->
-            BookCard(book = tempBook, modifier = Modifier)
-        }
-    }
-}
-
-@Composable
-fun Searchbar() {
+fun Searchbar(navController: NavController) {
     val viewModel = viewModel<SearchViewModel>()
     val searchText by viewModel.searchText.collectAsState()
     val data by viewModel.data.collectAsState()
@@ -262,10 +260,15 @@ fun Searchbar() {
                         }
                     }
                 },
-                singleLine = true
+                singleLine = true,
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = {
+                    viewModel.fetchBooks(searchText)
+                    navController.navigate("searchResult/${searchText}")
+                })
             )
 
-            if(isSearching) {
+            if (isSearching) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center)
@@ -292,30 +295,48 @@ fun Searchbar() {
 }
 
 @Composable
-fun SearchResult() {}
+fun SearchResultPage(query: String, viewModel: SearchViewModel = viewModel()) {
+    LaunchedEffect(query) {
+        viewModel.fetchBooks(query)
+    }
 
-@Composable
-fun Home() {
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            Searchbar()
+    val searchResults by viewModel.data.collectAsState()
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Box(
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        items(searchResults) { book ->
+            Card(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                shape = RoundedCornerShape(8.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-                Text(
-                    text = "Home",
-                    modifier = Modifier.align(Alignment.Center)
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    AsyncImage(
+                        model = book.imageUrl,
+                        contentDescription = book.title,
+                        modifier = Modifier.size(100.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(
+                        modifier = Modifier.align(Alignment.CenterVertically)
+                    ) {
+                        Text(text = book.title, style = MaterialTheme.typography.headlineMedium)
+                        Text(
+                            text = book.authors.joinToString(),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
             }
         }
     }
@@ -331,32 +352,14 @@ fun MyList() {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            var bookListByName by remember {
-                mutableStateOf<List<Book>>(emptyList())
-            }
-            LaunchedEffect(Unit) {
-                val bookResponse = API.retrofitService.getBooks("berserk")
-                bookListByName = bookResponse.items.map { bookItem ->
-                    Book(
-                        id = bookItem.id,
-                        title = bookItem.volumeInfo.title,
-                        authors = bookItem.volumeInfo.authors,
-                        description = bookItem.volumeInfo.description,
-                        publishedDate = bookItem.volumeInfo.publishedDate,
-                        pageCount = bookItem.volumeInfo.pageCount,
-                        categories = bookItem.volumeInfo.categories,
-                        language = bookItem.volumeInfo.language,
-                        imageUrl = bookItem.volumeInfo.imageLinks.toString()
-                    )
-                }
-            }
-            BookList(books = bookListByName)
+            Text(text = "MyList")
         }
     }
 }
 
 @Composable
 fun Settings() {
+    Log.d("Settings", "Settings composable loaded")
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -367,7 +370,6 @@ fun Settings() {
         }
     }
 }
-
 
 @Composable
 fun Detail() {
@@ -388,3 +390,4 @@ fun RecommendedForYou() {
 fun News() {
 
 }
+
