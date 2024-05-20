@@ -71,8 +71,8 @@ class SearchViewModel: ViewModel() {
                         imageUrl = bookItem.volumeInfo.imageLinks?.thumbnail ?: ""
                     )
                 }
-                _searchResults.value = newData // Update search results
-                _data.value = newData // Update all data in the ViewModel
+                _searchResults.value = newData
+                _data.value = newData
                 Log.d("fetchBooks", "Books fetched: $response")
             } catch (e: Exception) {
                 Log.d("Search", "Something went wrong: ${e.message}")
