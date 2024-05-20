@@ -23,6 +23,9 @@ class SearchViewModel: ViewModel(){
     private val _isSearching = MutableStateFlow(false)
     val isSearching = _isSearching.asStateFlow()
 
+    private val _searchResults = MutableStateFlow<List<Book>>(emptyList())
+    val searchResults = _searchResults.asStateFlow()
+
     private val _data = MutableStateFlow<List<Book>>(emptyList())
 
     val data = searchText
@@ -64,6 +67,7 @@ class SearchViewModel: ViewModel(){
                         imageUrl = bookItem.volumeInfo.imageLinks?.thumbnail ?: ""
                     )
                 }
+                _searchResults.value = _data.value
                 Log.d("fetchBooks", "Books fetched: $response")
             } catch (e: Exception) {
                 Log.d("Search", "Something went wrong: ${e.message}")
