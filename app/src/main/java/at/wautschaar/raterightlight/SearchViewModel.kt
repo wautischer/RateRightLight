@@ -1,10 +1,9 @@
 package at.wautschaar.raterightlight
 
 import android.util.Log
-import at.wautschaar.raterightlight.model.Book
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import at.wautschaar.raterightlight.model.Book
 import at.wautschaar.raterightlight.network.API
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,7 +67,7 @@ class SearchViewModel: ViewModel() {
                         pageCount = bookItem.volumeInfo.pageCount,
                         categories = bookItem.volumeInfo.categories,
                         language = bookItem.volumeInfo.language,
-                        imageUrl = bookItem.volumeInfo.imageLinks?.thumbnail ?: ""
+                        imageUrl = bookItem.volumeInfo.imageLinks.thumbnail ?: ""
                     )
                 }
                 _searchResults.value = newData
