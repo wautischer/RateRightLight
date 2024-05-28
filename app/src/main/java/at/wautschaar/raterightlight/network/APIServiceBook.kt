@@ -19,7 +19,7 @@ interface APIService {
     suspend fun getBooks(@Query("q") query: String): BookResponse
 }
 
-object API {
+object APIBook {
     val retrofitService: APIService by lazy {
         retrofit.create(APIService::class.java)
     }

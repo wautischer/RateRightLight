@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import at.wautschaar.raterightlight.model.Book
-import at.wautschaar.raterightlight.network.API
+import at.wautschaar.raterightlight.network.APIBook
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -56,7 +56,7 @@ class SearchViewModel: ViewModel() {
         Log.d("fetchBooks", "fetchBooks")
         viewModelScope.launch {
             try {
-                val response = API.retrofitService.getBooks(query)
+                val response = APIBook.retrofitService.getBooks(query)
                 val newData = response.items.map { bookItem ->
                     Book(
                         id = bookItem.id,
