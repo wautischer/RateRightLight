@@ -1,6 +1,6 @@
 package at.wautschaar.raterightlight.network
 
-import at.wautschaar.raterightlight.model.Movie
+import at.wautschaar.raterightlight.model.MovieResponse
 import at.wautschaar.raterightlight.model.TV
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -12,7 +12,6 @@ import retrofit2.http.Query
 
 private const val BASE_URL = "https://api.themoviedb.org/3/"
 private const val API_KEY = "00297a2d23ae92ff00ab9ec2c9458711"
-private const val IMAGE_URL = "https://image.tmdb.org/t/p/original/"
 
 val apiKeyInterceptor = Interceptor { chain ->
     val originalRequest: Request = chain.request()
@@ -37,10 +36,10 @@ var retrofitMDB = Retrofit.Builder()
 
 interface APIServiceMDB {
     @GET("search/movie")
-    suspend fun getMovie(@Query("q") query: String): List<Movie>
+    suspend fun getMovie(@Query("query") query: String): MovieResponse
 
     @GET("search/tv")
-    suspend fun getTV(@Query("q") query: String): List<TV>
+    suspend fun getTV(@Query("query") query: String): List<TV>
 }
 
 object APIMDB {

@@ -54,6 +54,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -73,8 +75,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import at.wautschaar.raterightlight.model.Book
+import at.wautschaar.raterightlight.model.Movie
+import at.wautschaar.raterightlight.network.APIMDB
 import at.wautschaar.raterightlight.ui.theme.RateRightLightTheme
 import coil.compose.AsyncImage
+
+private const val IMAGE_URL = "https://image.tmdb.org/t/p/original/"
 
 object Destinations {
     const val MY_LIST_ROUTE = "MyList"
@@ -389,15 +395,23 @@ fun BookItem(book: Book) {
 @Composable
 fun Settings() {
     Log.d("Settings", "Settings composable loaded")
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(text = "Settings")
+    var movieList by remember {
+        mutableStateOf<List<Movie>>(emptyList())
+    }
+    LaunchedEffect(Unit) {
+        val movieResponse = APIMDB.retrofitService.getMovie("oppenheimer")
+        movieList = movieResponse.results.map { movieItem ->
+            Movie(
+                id = movieItem.id,
+                original_language = movieItem.original_language,
+                title = movieItem.title,
+                overview = movieItem.overview,
+                poster_path = movieItem.poster_path,
+                release_date = movieItem.release_date
+            )
         }
     }
+    MovieList(movies = movieList)
 }
 
 @Composable
@@ -420,3 +434,22 @@ fun News() {
 
 }
 
+@Composable
+fun MovieCard (movie: Movie, modifier: Modifier = Modifier) {
+    Card(modifier = Modifier) {
+        Column {
+            movie.title?.let { Text(text = it) }
+            var poster = IMAGE_URL + movie.poster_path.toString()
+            AsyncImage(model = poster, contentDescription = movie.title,error = painterResource(R.drawable.ic_launcher_foreground))
+        }
+    }
+}
+
+@Composable
+fun MovieList (movies: List<Movie>, modifier: Modifier = Modifier) {
+    LazyColumn(modifier = Modifier) {
+        items(movies) {tempMovie ->
+            MovieCard(movie = tempMovie, modifier = Modifier)
+        }
+    }
+}
