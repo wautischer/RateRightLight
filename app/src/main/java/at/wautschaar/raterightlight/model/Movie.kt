@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Movie(
-    val id: String?,
+    val id: String,
     val original_language: String?,
     val title: String?,
     val overview: String?,

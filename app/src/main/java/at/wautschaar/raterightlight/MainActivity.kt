@@ -76,6 +76,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import at.wautschaar.raterightlight.model.Book
 import at.wautschaar.raterightlight.model.Movie
+import at.wautschaar.raterightlight.model.TV
 import at.wautschaar.raterightlight.network.APIMDB
 import at.wautschaar.raterightlight.ui.theme.RateRightLightTheme
 import coil.compose.AsyncImage
@@ -355,7 +356,6 @@ fun SearchResultPage(
 }
 
 
-
 @Composable
 fun BookItem(book: Book) {
     book.imageUrl?.let { Log.d("imageURL", it) }
@@ -398,8 +398,12 @@ fun Settings() {
     var movieList by remember {
         mutableStateOf<List<Movie>>(emptyList())
     }
+    var tvList by remember {
+        mutableStateOf<List<TV>>(emptyList())
+    }
     LaunchedEffect(Unit) {
         val movieResponse = APIMDB.retrofitService.getMovie("oppenheimer")
+        val tvResponse = APIMDB.retrofitService.getTV("the boys")
         movieList = movieResponse.results.map { movieItem ->
             Movie(
                 id = movieItem.id,
@@ -410,8 +414,19 @@ fun Settings() {
                 release_date = movieItem.release_date
             )
         }
+        tvList = tvResponse.results.map { TV ->
+            TV(
+                id = TV.id,
+                original_language = TV.original_language,
+                original_name = TV.original_name,
+                overview = TV.overview,
+                poster_path = TV.poster_path,
+                first_air_date = TV.first_air_date
+            )
+        }
     }
-    MovieList(movies = movieList)
+    //MovieList(movies = movieList)
+    TVList(tvs = tvList)
 }
 
 @Composable
@@ -434,22 +449,52 @@ fun News() {
 
 }
 
+//region Movie/TV Test composable
 @Composable
-fun MovieCard (movie: Movie, modifier: Modifier = Modifier) {
+fun MovieCard(movie: Movie, modifier: Modifier = Modifier) {
     Card(modifier = Modifier) {
         Column {
             movie.title?.let { Text(text = it) }
             var poster = IMAGE_URL + movie.poster_path.toString()
-            AsyncImage(model = poster, contentDescription = movie.title,error = painterResource(R.drawable.ic_launcher_foreground))
+            AsyncImage(
+                model = poster,
+                contentDescription = movie.title,
+                error = painterResource(R.drawable.ic_launcher_foreground)
+            )
         }
     }
 }
 
 @Composable
-fun MovieList (movies: List<Movie>, modifier: Modifier = Modifier) {
+fun TVCard(tv: TV, modifier: Modifier = Modifier) {
+    Card(modifier = Modifier) {
+        Column {
+            tv.original_name?.let { Text(text = it) }
+            var poster = IMAGE_URL + tv.poster_path.toString()
+            AsyncImage(
+                model = poster,
+                contentDescription = tv.original_name,
+                error = painterResource(R.drawable.ic_launcher_foreground)
+            )
+        }
+    }
+}
+
+@Composable
+fun MovieList(movies: List<Movie>, modifier: Modifier = Modifier) {
     LazyColumn(modifier = Modifier) {
-        items(movies) {tempMovie ->
+        items(movies) { tempMovie ->
             MovieCard(movie = tempMovie, modifier = Modifier)
         }
     }
 }
+
+@Composable
+fun TVList(tvs: List<TV>, modifier: Modifier = Modifier) {
+    LazyColumn(modifier = Modifier) {
+        items(tvs) { tempTv ->
+            TVCard(tv = tempTv, modifier = Modifier)
+        }
+    }
+}
+//endregion

@@ -1,7 +1,7 @@
 package at.wautschaar.raterightlight.network
 
 import at.wautschaar.raterightlight.model.MovieResponse
-import at.wautschaar.raterightlight.model.TV
+import at.wautschaar.raterightlight.model.TVResponse
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -39,7 +39,7 @@ interface APIServiceMDB {
     suspend fun getMovie(@Query("query") query: String): MovieResponse
 
     @GET("search/tv")
-    suspend fun getTV(@Query("query") query: String): List<TV>
+    suspend fun getTV(@Query("query") query: String): TVResponse
 }
 
 object APIMDB {
