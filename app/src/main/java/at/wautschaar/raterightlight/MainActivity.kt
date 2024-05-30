@@ -404,10 +404,14 @@ fun Settings() {
     var trendingList by remember {
         mutableStateOf<List<Movie>>(emptyList())
     }
+    var trendingTVList by remember {
+        mutableStateOf<List<TV>>(emptyList())
+    }
     LaunchedEffect(Unit) {
         val movieResponse = APIMDB.retrofitService.getMovie("oppenheimer")
         val tvResponse = APIMDB.retrofitService.getTV("the boys")
         val trendingResponse = APIMDB.retrofitService.getTrendingMovie()
+        val trendingTVResponse = APIMDB.retrofitService.getTrendingTV()
         
         movieList = movieResponse.results.map { Movie ->
             Movie(
@@ -439,10 +443,21 @@ fun Settings() {
                 release_date = Movie.release_date
             )
         }
+        trendingTVList = trendingTVResponse.results.map { TV ->
+            TV(
+                id = TV.id,
+                original_language = TV.original_language,
+                original_name = TV.original_name,
+                overview = TV.overview,
+                poster_path = TV.poster_path,
+                first_air_date = TV.first_air_date
+            )
+        }
     }
     //MovieList(movies = movieList)
     //TVList(tvs = tvList)
-    MovieList(movies = trendingList)
+    //MovieList(movies = trendingList)
+    TVList(tvs = trendingTVList)
 }
 
 @Composable

@@ -18,6 +18,11 @@ data class TVResponse(
 )
 
 @Serializable
+data class TrendingTVResponse(
+    val results: List<TV>
+)
+
+@Serializable
 data class tvItem(
     val id: String,
     val original_language: String,

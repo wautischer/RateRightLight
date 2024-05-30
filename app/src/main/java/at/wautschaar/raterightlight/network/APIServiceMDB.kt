@@ -2,7 +2,8 @@ package at.wautschaar.raterightlight.network
 
 import at.wautschaar.raterightlight.model.MovieResponse
 import at.wautschaar.raterightlight.model.TVResponse
-import at.wautschaar.raterightlight.model.TrendingResponse
+import at.wautschaar.raterightlight.model.TrendingMovieResponse
+import at.wautschaar.raterightlight.model.TrendingTVResponse
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -52,8 +53,11 @@ interface APIServiceMDB {
     @GET("search/tv")
     suspend fun getTV(@Query("query") query: String): TVResponse
 
-    @GET("trending/all/day?language=en-US")
-    suspend fun getTrendingMovie(): TrendingResponse
+    @GET("trending/movie/day?language=en-US")
+    suspend fun getTrendingMovie(): TrendingMovieResponse
+
+    @GET("trending/tv/day?language=en-US")
+    suspend fun getTrendingTV(): TrendingTVResponse
 }
 
 object APIMDB {
