@@ -2,6 +2,7 @@ package at.wautschaar.raterightlight.network
 
 import at.wautschaar.raterightlight.model.MovieResponse
 import at.wautschaar.raterightlight.model.TVResponse
+import at.wautschaar.raterightlight.model.TrendingResponse
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -12,6 +13,7 @@ import retrofit2.http.Query
 
 private const val BASE_URL = "https://api.themoviedb.org/3/"
 private const val API_KEY = "00297a2d23ae92ff00ab9ec2c9458711"
+private const val API_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwMDI5N2EyZDIzYWU5MmZmMDBhYjllYzJjOTQ1ODcxMSIsInN1YiI6IjY2NDVkMmExMDdmOTg5MTFkNTk1MzU5MyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.AWHQ4umhCWbwv0Wxs0BmNsLzBLCuL2YKhqHhCYUVQ_0"
 
 val apiKeyInterceptor = Interceptor { chain ->
     val originalRequest: Request = chain.request()
@@ -24,8 +26,17 @@ val apiKeyInterceptor = Interceptor { chain ->
     chain.proceed(request)
 }
 
+val authTokenInterceptor = Interceptor { chain ->
+    val originalRequest: Request = chain.request()
+    val requestBuilder = originalRequest.newBuilder()
+        .addHeader("Authorization", "Bearer $API_TOKEN")
+    val request = requestBuilder.build()
+    chain.proceed(request)
+}
+
 val okHttpClient = OkHttpClient.Builder()
     .addInterceptor(apiKeyInterceptor)
+    .addInterceptor(authTokenInterceptor)
     .build()
 
 var retrofitMDB = Retrofit.Builder()
@@ -40,6 +51,9 @@ interface APIServiceMDB {
 
     @GET("search/tv")
     suspend fun getTV(@Query("query") query: String): TVResponse
+
+    @GET("trending/all/day?language=en-US")
+    suspend fun getTrendingMovie(): TrendingResponse
 }
 
 object APIMDB {

@@ -401,17 +401,22 @@ fun Settings() {
     var tvList by remember {
         mutableStateOf<List<TV>>(emptyList())
     }
+    var trendingList by remember {
+        mutableStateOf<List<Movie>>(emptyList())
+    }
     LaunchedEffect(Unit) {
         val movieResponse = APIMDB.retrofitService.getMovie("oppenheimer")
         val tvResponse = APIMDB.retrofitService.getTV("the boys")
-        movieList = movieResponse.results.map { movieItem ->
+        val trendingResponse = APIMDB.retrofitService.getTrendingMovie()
+        
+        movieList = movieResponse.results.map { Movie ->
             Movie(
-                id = movieItem.id,
-                original_language = movieItem.original_language,
-                title = movieItem.title,
-                overview = movieItem.overview,
-                poster_path = movieItem.poster_path,
-                release_date = movieItem.release_date
+                id = Movie.id,
+                original_language = Movie.original_language,
+                title = Movie.title,
+                overview = Movie.overview,
+                poster_path = Movie.poster_path,
+                release_date = Movie.release_date
             )
         }
         tvList = tvResponse.results.map { TV ->
@@ -424,9 +429,20 @@ fun Settings() {
                 first_air_date = TV.first_air_date
             )
         }
+        trendingList = trendingResponse.results.map { Movie ->
+            Movie(
+                id = Movie.id,
+                original_language = Movie.original_language,
+                title = Movie.title,
+                overview = Movie.overview,
+                poster_path = Movie.poster_path,
+                release_date = Movie.release_date
+            )
+        }
     }
     //MovieList(movies = movieList)
-    TVList(tvs = tvList)
+    //TVList(tvs = tvList)
+    MovieList(movies = trendingList)
 }
 
 @Composable
@@ -454,7 +470,8 @@ fun News() {
 fun MovieCard(movie: Movie, modifier: Modifier = Modifier) {
     Card(modifier = Modifier) {
         Column {
-            movie.title?.let { Text(text = it) }
+            Text(text = movie.title.toString())
+            Text(text = movie.release_date.toString())
             var poster = IMAGE_URL + movie.poster_path.toString()
             AsyncImage(
                 model = poster,
@@ -469,7 +486,7 @@ fun MovieCard(movie: Movie, modifier: Modifier = Modifier) {
 fun TVCard(tv: TV, modifier: Modifier = Modifier) {
     Card(modifier = Modifier) {
         Column {
-            tv.original_name?.let { Text(text = it) }
+            Text(text = tv.original_name.toString())
             var poster = IMAGE_URL + tv.poster_path.toString()
             AsyncImage(
                 model = poster,

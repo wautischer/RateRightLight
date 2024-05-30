@@ -14,7 +14,11 @@ data class Movie(
 
 @Serializable
 data class MovieResponse(
-    val results: List<movieItem>
+    val results: List<Movie>
+)
+
+data class TrendingResponse(
+    val results: List<Movie>
 )
 
 @Serializable
