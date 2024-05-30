@@ -87,6 +87,7 @@ object Destinations {
     const val MY_LIST_ROUTE = "MyList"
     const val HOME_ROUTE = "Home"
     const val SETTINGS_ROUTE = "Settings"
+    const val TEST_ROUTE = "Test"
 }
 
 data class BottomNavigationItem(
@@ -135,6 +136,14 @@ class MainActivity : ComponentActivity() {
                                     onItemClick = {
                                         navController.navigate(Destinations.SETTINGS_ROUTE)
                                     }
+                                ),
+                                BottomNavigationItem(
+                                    title = "Test",
+                                    selectedIcon = Icons.Filled.Settings,
+                                    unselectedIcon = Icons.Outlined.Settings,
+                                    onItemClick = {
+                                        navController.navigate(Destinations.TEST_ROUTE)
+                                    }
                                 )
                             )
                             NavigationBar {
@@ -167,6 +176,7 @@ class MainActivity : ComponentActivity() {
                             composable(Destinations.MY_LIST_ROUTE) { MyList() }
                             composable(Destinations.HOME_ROUTE) { Home(navController) }
                             composable(Destinations.SETTINGS_ROUTE) { Settings() }
+                            composable(Destinations.TEST_ROUTE) { Test() }
                             composable("searchResult/{query}") { backStackEntry ->
                                 val query = backStackEntry.arguments?.getString("query") ?: ""
                                 SearchResultPage(query = query, navController = navController)
@@ -395,6 +405,31 @@ fun BookItem(book: Book) {
 @Composable
 fun Settings() {
     Log.d("Settings", "Settings composable loaded")
+}
+
+@Composable
+fun Detail() {
+
+}
+
+@Composable
+fun RecentlyWatched() {
+
+}
+
+@Composable
+fun RecommendedForYou() {
+
+}
+
+@Composable
+fun News() {
+
+}
+
+//region Movie/TV Test composable
+@Composable
+fun Test() {
     var movieList by remember {
         mutableStateOf<List<Movie>>(emptyList())
     }
@@ -412,7 +447,7 @@ fun Settings() {
         val tvResponse = APIMDB.retrofitService.getTV("the boys")
         val trendingResponse = APIMDB.retrofitService.getTrendingMovie()
         val trendingTVResponse = APIMDB.retrofitService.getTrendingTV()
-        
+
         movieList = movieResponse.results.map { Movie ->
             Movie(
                 id = Movie.id,
@@ -454,33 +489,12 @@ fun Settings() {
             )
         }
     }
-    //MovieList(movies = movieList)
+    MovieList(movies = movieList)
     //TVList(tvs = tvList)
     //MovieList(movies = trendingList)
-    TVList(tvs = trendingTVList)
+    //TVList(tvs = trendingTVList)
 }
 
-@Composable
-fun Detail() {
-
-}
-
-@Composable
-fun RecentlyWatched() {
-
-}
-
-@Composable
-fun RecommendedForYou() {
-
-}
-
-@Composable
-fun News() {
-
-}
-
-//region Movie/TV Test composable
 @Composable
 fun MovieCard(movie: Movie, modifier: Modifier = Modifier) {
     Card(modifier = Modifier) {
