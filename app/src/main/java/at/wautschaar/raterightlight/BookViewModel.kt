@@ -12,24 +12,25 @@ class BookViewModel : ViewModel() {
     private val _book = MutableStateFlow<Book?>(null)
     val book: StateFlow<Book?> = _book
 
+    private val _books = MutableStateFlow<List<Book>>(emptyList())
+    val books: StateFlow<List<Book>> = _books
+
     fun getBookByID(bookId: String) {
         viewModelScope.launch {
             try {
                 val bookResponse = APIBook.retrofitService.getBookByID(bookId)
-                val mappedBooks = bookResponse.items.map { bookItem ->
-                    Book(
-                        id = bookItem.id,
-                        title = bookItem.volumeInfo.title,
-                        authors = bookItem.volumeInfo.authors,
-                        publishedDate = bookItem.volumeInfo.publishedDate,
-                        description = bookItem.volumeInfo.description,
-                        pageCount = bookItem.volumeInfo.pageCount,
-                        categories = bookItem.volumeInfo.categories,
-                        language = bookItem.volumeInfo.language,
-                        imageUrl = bookItem.volumeInfo.imageLinks?.thumbnail
-                    )
-                }
-                _book.value = mappedBooks.first()
+                val book = Book(
+                    id = bookResponse.id,
+                    title = bookResponse.volumeInfo.title,
+                    authors = bookResponse.volumeInfo.authors,
+                    publishedDate = bookResponse.volumeInfo.publishedDate,
+                    description = bookResponse.volumeInfo.description,
+                    pageCount = bookResponse.volumeInfo.pageCount,
+                    categories = bookResponse.volumeInfo.categories,
+                    language = bookResponse.volumeInfo.language,
+                    imageUrl = bookResponse.volumeInfo.imageLinks?.thumbnail
+                )
+                _book.value = book
             } catch (e: Exception) {
                 println("Fehler beim Buch Fetch! Viewmodel: ${e.message}")
             }

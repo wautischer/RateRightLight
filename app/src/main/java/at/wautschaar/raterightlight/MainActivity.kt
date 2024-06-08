@@ -160,7 +160,7 @@ class MainActivity : ComponentActivity() {
                         pageCount = Book.volumeInfo.pageCount,
                         categories = Book.volumeInfo.categories,
                         language = Book.volumeInfo.language,
-                        imageUrl = Book.volumeInfo.imageLinks.thumbnail
+                        imageUrl = Book.volumeInfo.imageLinks?.thumbnail
                     )
                 }
 
@@ -237,7 +237,7 @@ class MainActivity : ComponentActivity() {
                             startDestination = Destinations.HOME_ROUTE,
                             modifier = Modifier.padding(innerPadding)
                         ) {
-                            composable(Destinations.MY_LIST_ROUTE) { MyList() }
+                            composable(Destinations.MY_LIST_ROUTE) { MyList(navController) }
                             composable(Destinations.HOME_ROUTE) { Home(navController) }
                             composable(Destinations.SETTINGS_ROUTE) { Settings() }
                             composable(Destinations.TRENDING_ROUTE) { TrendingPage(navController = navController) }
@@ -285,7 +285,7 @@ fun Home(navController: NavController) {
 }
 
 @Composable
-fun MyList() {
+fun MyList(navController: NavController) {
     Log.d("MyList", "MyList composable loaded")
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -547,77 +547,6 @@ fun TrendingPage(navController: NavController) {
     }
 }
 
-//region Movie/TV Test composable and Movie/TV/Book Card/List
-@Composable
-fun Test() {
-    var movieList by remember {
-        mutableStateOf<List<Movie>>(emptyList())
-    }
-    var tvList by remember {
-        mutableStateOf<List<TV>>(emptyList())
-    }
-    var trendingList by remember {
-        mutableStateOf<List<Movie>>(emptyList())
-    }
-    var trendingTVList by remember {
-        mutableStateOf<List<TV>>(emptyList())
-    }
-    var bookbyidList by remember {
-        mutableStateOf<List<Book>>(emptyList())
-    }
-    LaunchedEffect(Unit) {
-        val movieResponse = APIMDB.retrofitService.getMovie("oppenheimer")
-        val tvResponse = APIMDB.retrofitService.getTV("the boys")
-        val trendingResponse = APIMDB.retrofitService.getTrendingMovie()
-        val trendingTVResponse = APIMDB.retrofitService.getTrendingTV()
-
-        movieList = movieResponse.results.map { Movie ->
-            Movie(
-                id = Movie.id,
-                original_language = Movie.original_language,
-                title = Movie.title,
-                overview = Movie.overview,
-                poster_path = Movie.poster_path,
-                release_date = Movie.release_date
-            )
-        }
-        tvList = tvResponse.results.map { TV ->
-            TV(
-                id = TV.id,
-                original_language = TV.original_language,
-                original_name = TV.original_name,
-                overview = TV.overview,
-                poster_path = TV.poster_path,
-                first_air_date = TV.first_air_date
-            )
-        }
-        trendingList = trendingResponse.results.map { Movie ->
-            Movie(
-                id = Movie.id,
-                original_language = Movie.original_language,
-                title = Movie.title,
-                overview = Movie.overview,
-                poster_path = Movie.poster_path,
-                release_date = Movie.release_date
-            )
-        }
-        trendingTVList = trendingTVResponse.results.map { TV ->
-            TV(
-                id = TV.id,
-                original_language = TV.original_language,
-                original_name = TV.original_name,
-                overview = TV.overview,
-                poster_path = TV.poster_path,
-                first_air_date = TV.first_air_date
-            )
-        }
-    }
-    //MovieList(movies = movieList)
-    //TVList(tvs = tvList)
-    //MovieList(movies = trendingList)
-    //TVList(tvs = trendingTVList)
-}
-
 @Composable
 fun MovieList(movies: List<Movie>, modifier: Modifier = Modifier) {
     LazyVerticalGrid(
@@ -771,4 +700,89 @@ fun DetailedBookView(bookId: String, viewModel: BookViewModel = viewModel()) {
     }
 }
 
+//region Movie/TV Test composable and Movie/TV/Book Card/List
+@Composable
+fun Test() {
+    var movieList by remember {
+        mutableStateOf<List<Movie>>(emptyList())
+    }
+    var tvList by remember {
+        mutableStateOf<List<TV>>(emptyList())
+    }
+    var trendingList by remember {
+        mutableStateOf<List<Movie>>(emptyList())
+    }
+    var trendingTVList by remember {
+        mutableStateOf<List<TV>>(emptyList())
+    }
+    var bookbyidList by remember {
+        mutableStateOf<List<Book>>(emptyList())
+    }
+    LaunchedEffect(Unit) {
+        val movieResponse = APIMDB.retrofitService.getMovie("oppenheimer")
+        val tvResponse = APIMDB.retrofitService.getTV("the boys")
+        val trendingResponse = APIMDB.retrofitService.getTrendingMovie()
+        val trendingTVResponse = APIMDB.retrofitService.getTrendingTV()
+
+        movieList = movieResponse.results.map { Movie ->
+            Movie(
+                id = Movie.id,
+                original_language = Movie.original_language,
+                title = Movie.title,
+                overview = Movie.overview,
+                poster_path = Movie.poster_path,
+                release_date = Movie.release_date
+            )
+        }
+        tvList = tvResponse.results.map { TV ->
+            TV(
+                id = TV.id,
+                original_language = TV.original_language,
+                original_name = TV.original_name,
+                overview = TV.overview,
+                poster_path = TV.poster_path,
+                first_air_date = TV.first_air_date
+            )
+        }
+        trendingList = trendingResponse.results.map { Movie ->
+            Movie(
+                id = Movie.id,
+                original_language = Movie.original_language,
+                title = Movie.title,
+                overview = Movie.overview,
+                poster_path = Movie.poster_path,
+                release_date = Movie.release_date
+            )
+        }
+        trendingTVList = trendingTVResponse.results.map { TV ->
+            TV(
+                id = TV.id,
+                original_language = TV.original_language,
+                original_name = TV.original_name,
+                overview = TV.overview,
+                poster_path = TV.poster_path,
+                first_air_date = TV.first_air_date
+            )
+        }
+
+            val bookResponse = APIBook.retrofitService.getBookByID("uehtAAAAQBAJ")
+            val book = Book(
+                id = bookResponse.id,
+                title = bookResponse.volumeInfo.title,
+                authors = bookResponse.volumeInfo.authors,
+                publishedDate = bookResponse.volumeInfo.publishedDate,
+                description = bookResponse.volumeInfo.description,
+                pageCount = bookResponse.volumeInfo.pageCount,
+                categories = bookResponse.volumeInfo.categories,
+                language = bookResponse.volumeInfo.language,
+                imageUrl = bookResponse.volumeInfo.imageLinks?.thumbnail
+            )
+            //bookbyidList = listOf(book)
+    }
+    //BookList(books = bookbyidList, navController = navController)
+    //MovieList(movies = movieList)
+    //TVList(tvs = tvList)
+    //MovieList(movies = trendingList)
+    //TVList(tvs = trendingTVList)
+}
 //endregion

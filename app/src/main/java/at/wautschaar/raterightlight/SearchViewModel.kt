@@ -67,7 +67,7 @@ class SearchViewModel: ViewModel() {
                         pageCount = bookItem.volumeInfo.pageCount,
                         categories = bookItem.volumeInfo.categories,
                         language = bookItem.volumeInfo.language,
-                        imageUrl = bookItem.volumeInfo.imageLinks.thumbnail ?: ""
+                        imageUrl = bookItem.volumeInfo.imageLinks?.thumbnail ?: ""
                     )
                 }
                 _searchResults.value = newData
