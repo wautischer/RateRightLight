@@ -37,6 +37,7 @@ import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.List
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -428,7 +429,53 @@ fun RecommendedForYou() {
 
 @Composable
 fun TrendingPage() {
+    var selectedButton by remember { mutableStateOf("Bücher") }
 
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Button(
+                onClick = { selectedButton = "Bücher" },
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = if (selectedButton == "Bücher") Color.Black else Color.LightGray
+                ),
+                modifier = Modifier.width(120.dp)
+            ) {
+                Text(text = "Bücher")
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Button(
+                onClick = { selectedButton = "Filme" },
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = if (selectedButton == "Filme") Color.Black else Color.LightGray
+                ),
+                modifier = Modifier.width(120.dp)
+            ) {
+                Text(text = "Filme")
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Button(
+                onClick = { selectedButton = "Serien" },
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = if (selectedButton == "Serien") Color.Black else Color.LightGray
+                ),
+                modifier = Modifier.width(120.dp)
+            ) {
+                Text(text = "Serien")
+            }
+        }
+    }
 }
 
 //region Movie/TV Test composable
