@@ -85,6 +85,7 @@ import androidx.navigation.compose.rememberNavController
 import at.wautschaar.raterightlight.model.Book
 import at.wautschaar.raterightlight.model.Movie
 import at.wautschaar.raterightlight.model.TV
+import at.wautschaar.raterightlight.network.APIBook
 import at.wautschaar.raterightlight.network.APIMDB
 import at.wautschaar.raterightlight.ui.theme.RateRightLightTheme
 import coil.compose.AsyncImage
@@ -93,6 +94,7 @@ import coil.compose.rememberAsyncImagePainter
 private const val IMAGE_URL = "https://image.tmdb.org/t/p/original/"
 private var trendingMovieList = emptyList<Movie>()
 private var trendingTVList = emptyList<TV>()
+private var trendingBookList = emptyList<Book>()
 
 object Destinations {
     const val MY_LIST_ROUTE = "MyList"
@@ -119,9 +121,11 @@ class MainActivity : ComponentActivity() {
 
             var temptrendingMovieList by remember { mutableStateOf<List<Movie>>(emptyList()) }
             var temptrendingTVList by remember { mutableStateOf<List<TV>>(emptyList()) }
+            var temptrendingBookList by remember { mutableStateOf<List<Book>>(emptyList()) }
             LaunchedEffect(Unit) {
                 val trendingMovieResponse = APIMDB.retrofitService.getTrendingMovie()
                 val trendingTVResponse = APIMDB.retrofitService.getTrendingTV()
+                val trendingBookResponse = APIBook.retrofitService.getBooks("stephen&king")
 
                 temptrendingMovieList = trendingMovieResponse.results.map { Movie ->
                     Movie(
@@ -144,8 +148,24 @@ class MainActivity : ComponentActivity() {
                         first_air_date = TV.first_air_date
                     )
                 }
+
+                temptrendingBookList = trendingBookResponse.items.map { Book ->
+                    Book(
+                        id = Book.id,
+                        title = Book.volumeInfo.title,
+                        authors = Book.volumeInfo.authors,
+                        publishedDate = Book.volumeInfo.publishedDate,
+                        description = Book.volumeInfo.description,
+                        pageCount = Book.volumeInfo.pageCount,
+                        categories = Book.volumeInfo.categories,
+                        language = Book.volumeInfo.language,
+                        imageUrl = Book.volumeInfo.imageLinks.thumbnail
+                    )
+                }
+
                 trendingMovieList = temptrendingMovieList
                 trendingTVList = temptrendingTVList
+                trendingBookList = temptrendingBookList
             }
 
             RateRightLightTheme {
@@ -525,7 +545,7 @@ fun TrendingPage() {
         Box(modifier = Modifier.fillMaxSize()) {
             when (selectedButton) {
                 "Bücher" -> {
-                    Text(text = "Books")
+                    BookList(books = trendingBookList)
                 }
                 "Filme" -> {
                     MovieList(movies = trendingMovieList)
@@ -538,7 +558,7 @@ fun TrendingPage() {
     }
 }
 
-//region Movie/TV Test composable
+//region Movie/TV Test composable and Movie/TV/Book Card/List
 @Composable
 fun Test() {
     var movieList by remember {
@@ -605,7 +625,6 @@ fun Test() {
     //MovieList(movies = trendingList)
     //TVList(tvs = trendingTVList)
 }
-
 
 @Composable
 fun MovieList(movies: List<Movie>, modifier: Modifier = Modifier) {
@@ -687,6 +706,50 @@ fun TVCard(tv: TV, modifier: Modifier = Modifier) {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = tv.original_name.toString(), modifier = Modifier.padding(4.dp), Color.White)
+        }
+    }
+}
+
+@Composable
+fun BookList(books: List<Book>, modifier: Modifier = Modifier) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = modifier.padding(8.dp),
+        contentPadding = PaddingValues(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(books.size) { index ->
+            BookCard(book = books[index], modifier = Modifier.fillMaxWidth())
+        }
+    }
+}
+
+@Composable
+fun BookCard(book: Book, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier.padding(4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Black),
+        shape = RoundedCornerShape(10.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(8.dp)
+        ) {
+            val image_url1 = "https://books.google.com/books/content?id="
+            val image_url2 = "&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
+            val painter = rememberAsyncImagePainter(model = image_url1 + book.id + image_url2)
+            Image(
+                painter = painter,
+                contentDescription = book.title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(10.dp)),
+                contentScale = ContentScale.FillBounds
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = book.title, modifier = Modifier.padding(4.dp), Color.White)
         }
     }
 }
