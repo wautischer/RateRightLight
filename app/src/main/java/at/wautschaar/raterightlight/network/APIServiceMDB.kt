@@ -1,5 +1,6 @@
 package at.wautschaar.raterightlight.network
 
+import at.wautschaar.raterightlight.model.Movie
 import at.wautschaar.raterightlight.model.MovieResponse
 import at.wautschaar.raterightlight.model.TV
 import at.wautschaar.raterightlight.model.TVResponse
@@ -63,6 +64,9 @@ interface APIServiceMDB {
 
     @GET("tv/{series_id}?language=en-US")
     suspend fun getTvByID(@Path("series_id") tvId: String): TV
+
+    @GET("movie/{movie_id}?language=en-US")
+    suspend fun getMovieByID(@Path("movie_id") movieId: String): Movie
 }
 
 object APIMDB {

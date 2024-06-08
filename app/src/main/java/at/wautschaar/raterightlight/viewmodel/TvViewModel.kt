@@ -26,7 +26,7 @@ class TvViewModel : ViewModel() {
                 )
                 _tv.value = tv
             } catch (e: Exception) {
-                println("Fehler beim Film Fetch! Viewmodel: ${e.message}")
+                println("Fehler beim TV-Serien Fetch! Viewmodel: ${e.message}")
             }
         }
     }

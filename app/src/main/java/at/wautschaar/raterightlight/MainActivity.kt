@@ -99,6 +99,7 @@ import at.wautschaar.raterightlight.network.APIBook
 import at.wautschaar.raterightlight.network.APIMDB
 import at.wautschaar.raterightlight.ui.theme.RateRightLightTheme
 import at.wautschaar.raterightlight.viewmodel.BookViewModel
+import at.wautschaar.raterightlight.viewmodel.MovieViewModel
 import at.wautschaar.raterightlight.viewmodel.SearchViewModel
 import at.wautschaar.raterightlight.viewmodel.TvViewModel
 import coil.compose.AsyncImage
@@ -116,6 +117,7 @@ object Destinations {
     const val TRENDING_ROUTE = "TrendingPage"
     const val DETAILED_BOOK_VIEW = "DetailedBookView"
     const val DETAILED_TV_VIEW = "DetailedTvView"
+    const val DETAILED_MOVIE_VIEW = "DetailedMovieView"
 }
 
 data class BottomNavigationItem(
@@ -261,6 +263,10 @@ class MainActivity : ComponentActivity() {
                             composable("${Destinations.DETAILED_TV_VIEW}/{tvId}"){backStackEntry ->
                                 val tvId = backStackEntry.arguments?.getString("tvId") ?: ""
                                 DetailedTvView(tvId = tvId, navController = navController)
+                            }
+                            composable("${Destinations.DETAILED_MOVIE_VIEW}/{movieId}"){backStackEntry ->
+                                val movieId = backStackEntry.arguments?.getString("movieId") ?: ""
+                                DetailedMovieView(movieId = movieId, navController = navController)
                             }
                             composable("searchResult/{query}") { backStackEntry ->
                                 val query = backStackEntry.arguments?.getString("query") ?: ""
@@ -550,7 +556,7 @@ fun TrendingPage(navController: NavController) {
                     BookList(books = trendingBookList, navController = navController)
                 }
                 "Filme" -> {
-                    MovieList(movies = trendingMovieList)
+                    MovieList(movies = trendingMovieList, navController = navController)
                 }
                 "Serien" -> {
                     TVList(tvs = trendingTVList, navController = navController)
@@ -561,7 +567,7 @@ fun TrendingPage(navController: NavController) {
 }
 
 @Composable
-fun MovieList(movies: List<Movie>, modifier: Modifier = Modifier) {
+fun MovieList(movies: List<Movie>, modifier: Modifier = Modifier, navController: NavController) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = modifier.padding(8.dp),
@@ -569,18 +575,21 @@ fun MovieList(movies: List<Movie>, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(movies.size) { index ->
-            MovieCard(movie = movies[index], modifier = Modifier.fillMaxWidth())
+        items(movies) { movie ->
+            MovieCard(movie = movie, navController = navController ,modifier = Modifier.fillMaxWidth())
         }
     }
 }
 
 @Composable
-fun MovieCard(movie: Movie, modifier: Modifier = Modifier) {
+fun MovieCard(movie: Movie,navController: NavController ,modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.padding(4.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Black),
-        shape = RoundedCornerShape(10.dp)
+        shape = RoundedCornerShape(10.dp),
+        onClick = {
+            navController.navigate("${Destinations.DETAILED_MOVIE_VIEW}/${movie.id}")
+        }
     ) {
         Column(
             modifier = Modifier
@@ -808,6 +817,19 @@ fun DetailedTvView(tvId: String, navController: NavController, viewModel: TvView
     }
     
     Text(text = tv?.original_name.toString())
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@Composable
+fun DetailedMovieView(movieId: String, navController: NavController, viewModel: MovieViewModel = viewModel()) {
+    val movie by viewModel.movie.collectAsState()
+    
+    LaunchedEffect(movieId) {
+        viewModel.getMovieByID(movieId)
+    }
+    
+    Text(text = movie?.title.toString())
 }
 
 fun removeHtmlTags(htmlText: String): String {
