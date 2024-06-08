@@ -815,8 +815,94 @@ fun DetailedTvView(tvId: String, navController: NavController, viewModel: TvView
     LaunchedEffect(tvId) {
         viewModel.getTvByID(tvId)
     }
-    
-    Text(text = tv?.original_name.toString())
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(tv?.original_name.toString()) },
+                navigationIcon = {
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp)
+                            .clip(CircleShape)
+                            .background(Color.Black)
+                    ) {
+                        IconButton(
+                            onClick = { navController.popBackStack() },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color.White
+                            )
+                        }
+                    }
+                }
+            )
+        },
+        content = {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 85.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                item {
+                    val painter = rememberAsyncImagePainter(model = IMAGE_URL + tv?.poster_path)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(600.dp)
+                    ) {
+                        IconButton(
+                            onClick = { navController.popBackStack() },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .align(Alignment.TopStart)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color.White
+                            )
+                        }
+                        Image(
+                            painter = painter,
+                            contentDescription = tv?.original_name,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight()
+                                .clip(RoundedCornerShape(25.dp)),
+                            contentScale = ContentScale.FillBounds
+                        )
+                    }
+                }
+                item {
+                    Spacer(modifier = Modifier.padding(top = 10.dp))
+                    Text(text = tv?.original_name.toString(), fontSize = 40.sp, fontWeight = FontWeight.Bold)
+                }
+                item {
+                    Text(text = "Sprache: " + (tv?.original_language ?: "Keine Sprache vorhanden!"))
+                }
+                item {
+                    //TODO: Länge bzw. Folgenanzahl
+                }
+                item {
+                    Text(text = "Veröffentlichungsdatum: " + (tv?.first_air_date ?: "Kein Veröffentlichungsdatum vorhanden!"))
+                }
+                item {
+                    Text(text = "Beschreibung", fontWeight = FontWeight.Bold, fontSize = 20.sp, modifier = Modifier.padding(top = 20.dp))
+                    val description = tv?.overview ?: "Keine Beschreibung vorhanden!"
+                    val plainDescription = removeHtmlTags(description)
+                    Text(text = plainDescription)
+                }
+                item {
+                    AmazonButton(bookTitle = tv?.original_name.toString(), author = tv?.first_air_date.toString())
+                }
+            }
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
