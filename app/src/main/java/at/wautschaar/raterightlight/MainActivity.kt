@@ -30,10 +30,12 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.List
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -87,6 +89,7 @@ object Destinations {
     const val MY_LIST_ROUTE = "MyList"
     const val HOME_ROUTE = "Home"
     const val SETTINGS_ROUTE = "Settings"
+    const val TRENDING_ROUTE = "TrendingPage"
     const val TEST_ROUTE = "Test"
 }
 
@@ -138,11 +141,11 @@ class MainActivity : ComponentActivity() {
                                     }
                                 ),
                                 BottomNavigationItem(
-                                    title = "Test",
-                                    selectedIcon = Icons.Filled.Settings,
-                                    unselectedIcon = Icons.Outlined.Settings,
+                                    title = "Trending",
+                                    selectedIcon = Icons.Filled.Notifications,
+                                    unselectedIcon = Icons.Outlined.Notifications,
                                     onItemClick = {
-                                        navController.navigate(Destinations.TEST_ROUTE)
+                                        navController.navigate(Destinations.TRENDING_ROUTE)
                                     }
                                 )
                             )
@@ -176,7 +179,7 @@ class MainActivity : ComponentActivity() {
                             composable(Destinations.MY_LIST_ROUTE) { MyList() }
                             composable(Destinations.HOME_ROUTE) { Home(navController) }
                             composable(Destinations.SETTINGS_ROUTE) { Settings() }
-                            composable(Destinations.TEST_ROUTE) { Test() }
+                            composable(Destinations.TRENDING_ROUTE) { TrendingPage() }
                             composable("searchResult/{query}") { backStackEntry ->
                                 val query = backStackEntry.arguments?.getString("query") ?: ""
                                 SearchResultPage(query = query, navController = navController)
@@ -313,6 +316,7 @@ fun Searchbar(navController: NavController) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SearchResultPage(
@@ -423,7 +427,7 @@ fun RecommendedForYou() {
 }
 
 @Composable
-fun News() {
+fun TrendingPage() {
 
 }
 
