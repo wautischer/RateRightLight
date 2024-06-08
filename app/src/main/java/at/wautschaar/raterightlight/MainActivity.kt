@@ -112,6 +112,7 @@ object Destinations {
     const val SETTINGS_ROUTE = "Settings"
     const val TRENDING_ROUTE = "TrendingPage"
     const val DETAILED_BOOK_VIEW = "DetailedBookView"
+    const val DETAILED_TV_VIEW = "DetailedTvView"
 }
 
 data class BottomNavigationItem(
@@ -254,6 +255,10 @@ class MainActivity : ComponentActivity() {
                                 val bookId = backStackEntry.arguments?.getString("bookId") ?: ""
                                 DetailedBookView(bookId, navController)
                             }
+                            composable("${Destinations.DETAILED_TV_VIEW}/{tvId}"){backStackEntry ->
+                                val tvId = backStackEntry.arguments?.getString("tvId") ?: ""
+                                DetailedTvView(tvId = tvId, navController = navController)
+                            }
                             composable("searchResult/{query}") { backStackEntry ->
                                 val query = backStackEntry.arguments?.getString("query") ?: ""
                                 SearchResultPage(query = query, navController = navController)
@@ -393,11 +398,7 @@ fun Searchbar(navController: NavController) {
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun SearchResultPage(
-    query: String,
-    navController: NavController,
-    viewModel: SearchViewModel = viewModel()
-) {
+fun SearchResultPage(query: String, navController: NavController, viewModel: SearchViewModel = viewModel()) {
     Log.d("SearchResult", "SearchResult composable loaded")
     LaunchedEffect(query) {
         viewModel.fetchBooks(query)
@@ -549,7 +550,7 @@ fun TrendingPage(navController: NavController) {
                     MovieList(movies = trendingMovieList)
                 }
                 "Serien" -> {
-                    TVList(tvs = trendingTVList)
+                    TVList(tvs = trendingTVList, navController = navController)
                 }
             }
         }
@@ -599,7 +600,7 @@ fun MovieCard(movie: Movie, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun TVList(tvs: List<TV>, modifier: Modifier = Modifier) {
+fun TVList(tvs: List<TV>, modifier: Modifier = Modifier, navController: NavController) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = modifier.padding(8.dp),
@@ -607,18 +608,21 @@ fun TVList(tvs: List<TV>, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(tvs.size) { index ->
-            TVCard(tv = tvs[index], modifier = Modifier.fillMaxWidth())
+        items(tvs) { tv ->
+            TVCard(tv = tv, navController = navController, modifier = Modifier.fillMaxWidth())
         }
     }
 }
 
 @Composable
-fun TVCard(tv: TV, modifier: Modifier = Modifier) {
+fun TVCard(tv: TV, navController:NavController, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.padding(4.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Black),
-        shape = RoundedCornerShape(10.dp)
+        shape = RoundedCornerShape(10.dp),
+        onClick = {
+            navController.navigate("${Destinations.DETAILED_TV_VIEW}/${tv.id}")
+        }
     ) {
         Column(
             modifier = Modifier
@@ -641,11 +645,7 @@ fun TVCard(tv: TV, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun BookList(
-    books: List<Book>,
-    modifier: Modifier = Modifier,
-    navController: NavController
-) {
+fun BookList(books: List<Book>, modifier: Modifier = Modifier, navController: NavController) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = modifier.padding(8.dp),
@@ -660,11 +660,7 @@ fun BookList(
 }
 
 @Composable
-fun BookCard(
-    book: Book,
-    navController: NavController,
-    modifier: Modifier = Modifier
-) {
+fun BookCard(book: Book, navController: NavController, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.padding(4.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Black),
@@ -796,6 +792,19 @@ fun DetailedBookView(bookId: String, navController: NavController, viewModel: Bo
             }
         }
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@Composable
+fun DetailedTvView(tvId: String, navController: NavController, viewModel: TvViewModel = viewModel()){
+    val tv by viewModel.tv.collectAsState()
+
+    LaunchedEffect(tvId) {
+        viewModel.getTvByID(tvId)
+    }
+    
+    Text(text = tv?.original_name.toString())
 }
 
 fun removeHtmlTags(htmlText: String): String {
