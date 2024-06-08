@@ -1,4 +1,4 @@
-package at.wautschaar.raterightlight
+package at.wautschaar.raterightlight.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

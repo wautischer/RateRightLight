@@ -98,6 +98,9 @@ import at.wautschaar.raterightlight.model.TV
 import at.wautschaar.raterightlight.network.APIBook
 import at.wautschaar.raterightlight.network.APIMDB
 import at.wautschaar.raterightlight.ui.theme.RateRightLightTheme
+import at.wautschaar.raterightlight.viewmodel.BookViewModel
+import at.wautschaar.raterightlight.viewmodel.SearchViewModel
+import at.wautschaar.raterightlight.viewmodel.TvViewModel
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 
