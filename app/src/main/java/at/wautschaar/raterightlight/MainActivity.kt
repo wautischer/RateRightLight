@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package at.wautschaar.raterightlight;
+package at.wautschaar.raterightlight
 
 import android.annotation.SuppressLint
 import android.os.Bundle
@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -101,6 +102,7 @@ object Destinations {
     const val HOME_ROUTE = "Home"
     const val SETTINGS_ROUTE = "Settings"
     const val TRENDING_ROUTE = "TrendingPage"
+    const val DETAILED_BOOK_VIEW = "DetailedBookView"
     const val TEST_ROUTE = "Test"
 }
 
@@ -239,7 +241,11 @@ class MainActivity : ComponentActivity() {
                             composable(Destinations.MY_LIST_ROUTE) { MyList() }
                             composable(Destinations.HOME_ROUTE) { Home(navController) }
                             composable(Destinations.SETTINGS_ROUTE) { Settings() }
-                            composable(Destinations.TRENDING_ROUTE) { TrendingPage() }
+                            composable(Destinations.TRENDING_ROUTE) { TrendingPage(navController = navController) }
+                            composable("${Destinations.DETAILED_BOOK_VIEW}/{bookId}") { backStackEntry ->
+                                val bookId = backStackEntry.arguments?.getString("bookId") ?: ""
+                                DetailedBookView(bookId)
+                            }
                             composable("searchResult/{query}") { backStackEntry ->
                                 val query = backStackEntry.arguments?.getString("query") ?: ""
                                 SearchResultPage(query = query, navController = navController)
@@ -487,7 +493,7 @@ fun RecommendedForYou() {
 }
 
 @Composable
-fun TrendingPage() {
+fun TrendingPage(navController: NavController) {
     var selectedButton by remember { mutableStateOf("Bücher") }
 
     Column(
@@ -545,7 +551,7 @@ fun TrendingPage() {
         Box(modifier = Modifier.fillMaxSize()) {
             when (selectedButton) {
                 "Bücher" -> {
-                    BookList(books = trendingBookList)
+                    BookList(books = trendingBookList, navController = navController)
                 }
                 "Filme" -> {
                     MovieList(movies = trendingMovieList)
@@ -711,7 +717,11 @@ fun TVCard(tv: TV, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun BookList(books: List<Book>, modifier: Modifier = Modifier) {
+fun BookList(
+    books: List<Book>,
+    modifier: Modifier = Modifier,
+    navController: NavController
+) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = modifier.padding(8.dp),
@@ -719,22 +729,28 @@ fun BookList(books: List<Book>, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(books.size) { index ->
-            BookCard(book = books[index], modifier = Modifier.fillMaxWidth())
+        items(books) { book ->
+            BookCard(book = book, navController = navController, modifier = Modifier.fillMaxWidth())
         }
     }
 }
 
 @Composable
-fun BookCard(book: Book, modifier: Modifier = Modifier) {
+fun BookCard(
+    book: Book,
+    navController: NavController,
+    modifier: Modifier = Modifier
+) {
     Card(
         modifier = modifier.padding(4.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Black),
-        shape = RoundedCornerShape(10.dp)
+        shape = RoundedCornerShape(10.dp),
+        onClick = {
+            navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${book.id}")
+        }
     ) {
         Column(
-            modifier = Modifier
-                .padding(8.dp)
+            modifier = Modifier.padding(8.dp)
         ) {
             val image_url1 = "https://books.google.com/books/content?id="
             val image_url2 = "&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
@@ -753,4 +769,11 @@ fun BookCard(book: Book, modifier: Modifier = Modifier) {
         }
     }
 }
+
+
+@Composable
+fun DetailedBookView(bookId: String) {
+    Text(text = "Ich bin die DetaildView" + bookId)
+}
+
 //endregion
