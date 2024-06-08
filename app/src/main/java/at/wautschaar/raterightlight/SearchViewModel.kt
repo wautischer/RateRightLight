@@ -28,20 +28,20 @@ class SearchViewModel: ViewModel() {
     private val _data = MutableStateFlow<List<Book>>(emptyList())
 
     val data = searchText
-        .debounce(500L)
+        .debounce(200L)
         .onEach { _isSearching.value = true }
         .combine(_data) { text, item ->
             if (text.isBlank()) {
                 item
             } else {
-                delay(250L)
+                delay(100L)
                 item.filter { it.doesMatchSearchQuery(text) }
             }
         }
         .onEach { _isSearching.value = false }
         .stateIn(
             viewModelScope,
-            SharingStarted.WhileSubscribed(1000),
+            SharingStarted.WhileSubscribed(500),
             _data.value
         )
 
