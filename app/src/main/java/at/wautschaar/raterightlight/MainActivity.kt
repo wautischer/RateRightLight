@@ -3,10 +3,16 @@
 package at.wautschaar.raterightlight
 
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.text.Html
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -76,8 +82,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -667,9 +675,9 @@ fun BookCard(
         Column(
             modifier = Modifier.padding(8.dp)
         ) {
-            val image_url1 = "https://books.google.com/books/content?id="
-            val image_url2 = "&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
-            val painter = rememberAsyncImagePainter(model = image_url1 + book.id + image_url2)
+            val imageUrl1 = "https://books.google.com/books/content?id="
+            val imageUrl2 = "&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
+            val painter = rememberAsyncImagePainter(model = imageUrl1 + book.id + imageUrl2)
             Image(
                 painter = painter,
                 contentDescription = book.title,
@@ -694,11 +702,80 @@ fun DetailedBookView(bookId: String, viewModel: BookViewModel = viewModel()) {
     }
 
     book?.let {
-        Text(text = "Ich bin die DetaildView ${it.title}")
+        val imageUrl1 = "https://books.google.com/books/content?id="
+        val imageUrl2 = "&printsec=frontcover&img=1&zoom=3&edge=curl&source=gbs_api"
+        val painter = rememberAsyncImagePainter(model = imageUrl1 + it.id + imageUrl2)
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            item {
+                Image(
+                    painter = painter,
+                    contentDescription = it.title,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(600.dp)
+                        .clip(RoundedCornerShape(25.dp)),
+                    contentScale = ContentScale.FillBounds
+                )
+            }
+            item {
+                Spacer(modifier = Modifier.padding(top = 10.dp))
+                Text(text = it.title, fontSize = 40.sp, fontWeight = FontWeight.Bold)
+            }
+            item {
+                Text(text = "Autor: " + (it.authors?.get(0) ?: "Kein(e) Autor(en) bekannt!"))
+            }
+            item {
+                Text(text = "Sprache: " + (it.language ?: "Keine Sprache vorhanden!"))
+            }
+            item {
+                Text(text = "Seitenanzahl: " + (it.pageCount?.toString() ?: "Keine Seitenanzahl vorhanden!"))
+            }
+            item {
+                Text(text = "Veröffentlichungsdatum: " + (it.publishedDate ?: "Kein Veröffentlichungsdatum vorhanden!"))
+            }
+            item {
+                Text(text = "Beschreibung", fontWeight = FontWeight.Bold, fontSize = 20.sp, modifier = Modifier.padding(top = 20.dp))
+                val description = it.description ?: "Keine Beschreibung vorhanden!"
+                val plainDescription = removeHtmlTags(description)
+                Text(text = plainDescription)
+            }
+            item { 
+                AmazonButton(bookTitle = it.title, author = it.authors?.get(0).toString())
+            }
+        }
     } ?: run {
         Text(text = "Lade Buchinformationen...")
     }
 }
+
+fun removeHtmlTags(htmlText: String): String {
+    return Html.fromHtml(htmlText, Html.FROM_HTML_MODE_LEGACY).toString()
+}
+
+@Composable
+fun AmazonButton(bookTitle: String, author: String) {
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { }
+
+    Button(
+        onClick = { launchAmazon(bookTitle, author, launcher) },
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Black)
+    ) {
+        Text("Kauf auf Amazon", color = Color.White)
+    }
+}
+
+private fun launchAmazon(bookTitle: String, author: String, launcher: ActivityResultLauncher<Intent>) {
+    val searchQuery = "${Uri.encode(bookTitle)}+${Uri.encode(author)}"
+    val amazonUrl = "https://www.amazon.com/s?k=$searchQuery"
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(amazonUrl))
+    launcher.launch(intent)
+}
+
 
 //region Movie/TV Test composable and Movie/TV/Book Card/List
 @Composable
