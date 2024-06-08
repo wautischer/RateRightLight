@@ -4,6 +4,7 @@ import at.wautschaar.raterightlight.model.BookResponse
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 
@@ -17,6 +18,10 @@ var retrofit = Retrofit.Builder()
 interface APIService {
     @GET("volumes")
     suspend fun getBooks(@Query("q") query: String): BookResponse
+
+    @GET("volumes/{bookId}")
+    suspend fun getBookByID(@Path("bookId") bookId: String): BookResponse
+
 }
 
 object APIBook {

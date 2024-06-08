@@ -103,7 +103,6 @@ object Destinations {
     const val SETTINGS_ROUTE = "Settings"
     const val TRENDING_ROUTE = "TrendingPage"
     const val DETAILED_BOOK_VIEW = "DetailedBookView"
-    const val TEST_ROUTE = "Test"
 }
 
 data class BottomNavigationItem(
@@ -435,7 +434,6 @@ fun SearchResultPage(
     )
 }
 
-
 @Composable
 fun BookItem(book: Book) {
     book.imageUrl?.let { Log.d("imageURL", it) }
@@ -475,21 +473,6 @@ fun BookItem(book: Book) {
 @Composable
 fun Settings() {
     Log.d("Settings", "Settings composable loaded")
-}
-
-@Composable
-fun Detail() {
-
-}
-
-@Composable
-fun RecentlyWatched() {
-
-}
-
-@Composable
-fun RecommendedForYou() {
-
 }
 
 @Composable
@@ -578,6 +561,9 @@ fun Test() {
     }
     var trendingTVList by remember {
         mutableStateOf<List<TV>>(emptyList())
+    }
+    var bookbyidList by remember {
+        mutableStateOf<List<Book>>(emptyList())
     }
     LaunchedEffect(Unit) {
         val movieResponse = APIMDB.retrofitService.getMovie("oppenheimer")
@@ -770,10 +756,19 @@ fun BookCard(
     }
 }
 
-
 @Composable
-fun DetailedBookView(bookId: String) {
-    Text(text = "Ich bin die DetaildView" + bookId)
+fun DetailedBookView(bookId: String, viewModel: BookViewModel = viewModel()) {
+    val book by viewModel.book.collectAsState()
+
+    LaunchedEffect(bookId) {
+        viewModel.getBookByID(bookId)
+    }
+
+    book?.let {
+        Text(text = "Ich bin die DetaildView ${it.title}")
+    } ?: run {
+        Text(text = "Lade Buchinformationen...")
+    }
 }
 
 //endregion
