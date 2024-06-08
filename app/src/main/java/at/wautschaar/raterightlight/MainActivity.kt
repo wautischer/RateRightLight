@@ -7,10 +7,12 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +22,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -38,6 +42,7 @@ import androidx.compose.material.icons.outlined.List
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -83,8 +88,11 @@ import at.wautschaar.raterightlight.model.TV
 import at.wautschaar.raterightlight.network.APIMDB
 import at.wautschaar.raterightlight.ui.theme.RateRightLightTheme
 import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
 
 private const val IMAGE_URL = "https://image.tmdb.org/t/p/original/"
+private var trendingMovieList = emptyList<Movie>()
+private var trendingTVList = emptyList<TV>()
 
 object Destinations {
     const val MY_LIST_ROUTE = "MyList"
@@ -108,6 +116,37 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navController = rememberNavController()
             var selectedItemIndex by rememberSaveable { mutableIntStateOf(1) }
+
+            var temptrendingMovieList by remember { mutableStateOf<List<Movie>>(emptyList()) }
+            var temptrendingTVList by remember { mutableStateOf<List<TV>>(emptyList()) }
+            LaunchedEffect(Unit) {
+                val trendingMovieResponse = APIMDB.retrofitService.getTrendingMovie()
+                val trendingTVResponse = APIMDB.retrofitService.getTrendingTV()
+
+                temptrendingMovieList = trendingMovieResponse.results.map { Movie ->
+                    Movie(
+                        id = Movie.id,
+                        original_language = Movie.original_language,
+                        title = Movie.title,
+                        overview = Movie.overview,
+                        poster_path = Movie.poster_path,
+                        release_date = Movie.release_date
+                    )
+                }
+
+                temptrendingTVList = trendingTVResponse.results.map { TV ->
+                    TV(
+                        id = TV.id,
+                        original_language = TV.original_language,
+                        original_name = TV.original_name,
+                        overview = TV.overview,
+                        poster_path = TV.poster_path,
+                        first_air_date = TV.first_air_date
+                    )
+                }
+                trendingMovieList = temptrendingMovieList
+                trendingTVList = temptrendingTVList
+            }
 
             RateRightLightTheme {
                 Surface(
@@ -431,48 +470,69 @@ fun RecommendedForYou() {
 fun TrendingPage() {
     var selectedButton by remember { mutableStateOf("Bücher") }
 
-    Box(
+    Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        contentAlignment = Alignment.TopCenter
+            .fillMaxSize()
+            .padding(16.dp)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(),
+            contentAlignment = Alignment.TopCenter
         ) {
-            Button(
-                onClick = { selectedButton = "Bücher" },
-                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = if (selectedButton == "Bücher") Color.Black else Color.LightGray
-                ),
-                modifier = Modifier.width(120.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
             ) {
-                Text(text = "Bücher")
+                Button(
+                    onClick = { selectedButton = "Bücher" },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (selectedButton == "Bücher") Color.Black else Color.LightGray
+                    ),
+                    modifier = Modifier.width(120.dp)
+                ) {
+                    Text(text = "Bücher", color = if (selectedButton == "Bücher") Color.White else Color.Black)
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Button(
+                    onClick = { selectedButton = "Filme" },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (selectedButton == "Filme") Color.Black else Color.LightGray
+                    ),
+                    modifier = Modifier.width(120.dp)
+                ) {
+                    Text(text = "Filme", color = if (selectedButton == "Filme") Color.White else Color.Black)
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Button(
+                    onClick = { selectedButton = "Serien" },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (selectedButton == "Serien") Color.Black else Color.LightGray
+                    ),
+                    modifier = Modifier.width(120.dp)
+                ) {
+                    Text(text = "Serien", color = if (selectedButton == "Serien") Color.White else Color.Black)
+                }
             }
+        }
 
-            Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-            Button(
-                onClick = { selectedButton = "Filme" },
-                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = if (selectedButton == "Filme") Color.Black else Color.LightGray
-                ),
-                modifier = Modifier.width(120.dp)
-            ) {
-                Text(text = "Filme")
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Button(
-                onClick = { selectedButton = "Serien" },
-                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = if (selectedButton == "Serien") Color.Black else Color.LightGray
-                ),
-                modifier = Modifier.width(120.dp)
-            ) {
-                Text(text = "Serien")
+        Box(modifier = Modifier.fillMaxSize()) {
+            when (selectedButton) {
+                "Bücher" -> {
+                    Text(text = "Books")
+                }
+                "Filme" -> {
+                    MovieList(movies = trendingMovieList)
+                }
+                "Serien" -> {
+                    TVList(tvs = trendingTVList)
+                }
             }
         }
     }
@@ -540,57 +600,93 @@ fun Test() {
             )
         }
     }
-    MovieList(movies = movieList)
+    //MovieList(movies = movieList)
     //TVList(tvs = tvList)
     //MovieList(movies = trendingList)
     //TVList(tvs = trendingTVList)
 }
 
-@Composable
-fun MovieCard(movie: Movie, modifier: Modifier = Modifier) {
-    Card(modifier = Modifier) {
-        Column {
-            Text(text = movie.title.toString())
-            Text(text = movie.release_date.toString())
-            var poster = IMAGE_URL + movie.poster_path.toString()
-            AsyncImage(
-                model = poster,
-                contentDescription = movie.title,
-                error = painterResource(R.drawable.ic_launcher_foreground)
-            )
-        }
-    }
-}
-
-@Composable
-fun TVCard(tv: TV, modifier: Modifier = Modifier) {
-    Card(modifier = Modifier) {
-        Column {
-            Text(text = tv.original_name.toString())
-            var poster = IMAGE_URL + tv.poster_path.toString()
-            AsyncImage(
-                model = poster,
-                contentDescription = tv.original_name,
-                error = painterResource(R.drawable.ic_launcher_foreground)
-            )
-        }
-    }
-}
 
 @Composable
 fun MovieList(movies: List<Movie>, modifier: Modifier = Modifier) {
-    LazyColumn(modifier = Modifier) {
-        items(movies) { tempMovie ->
-            MovieCard(movie = tempMovie, modifier = Modifier)
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = modifier.padding(8.dp),
+        contentPadding = PaddingValues(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(movies.size) { index ->
+            MovieCard(movie = movies[index], modifier = Modifier.fillMaxWidth())
+        }
+    }
+}
+
+@Composable
+fun MovieCard(movie: Movie, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier.padding(4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Black),
+        shape = RoundedCornerShape(10.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(8.dp)
+        ) {
+            val painter = rememberAsyncImagePainter(model = IMAGE_URL + movie.poster_path)
+            Image(
+                painter = painter,
+                contentDescription = movie.title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(10.dp)),
+                contentScale = ContentScale.FillBounds
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = movie.title.toString(), modifier = Modifier.padding(4.dp), Color.White)
         }
     }
 }
 
 @Composable
 fun TVList(tvs: List<TV>, modifier: Modifier = Modifier) {
-    LazyColumn(modifier = Modifier) {
-        items(tvs) { tempTv ->
-            TVCard(tv = tempTv, modifier = Modifier)
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = modifier.padding(8.dp),
+        contentPadding = PaddingValues(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(tvs.size) { index ->
+            TVCard(tv = tvs[index], modifier = Modifier.fillMaxWidth())
+        }
+    }
+}
+
+@Composable
+fun TVCard(tv: TV, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier.padding(4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Black),
+        shape = RoundedCornerShape(10.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(8.dp)
+        ) {
+            val painter = rememberAsyncImagePainter(model = IMAGE_URL + tv.poster_path)
+            Image(
+                painter = painter,
+                contentDescription = tv.original_name,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(10.dp)),
+                contentScale = ContentScale.FillBounds
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = tv.original_name.toString(), modifier = Modifier.padding(4.dp), Color.White)
         }
     }
 }
