@@ -263,11 +263,11 @@ class MainActivity : ComponentActivity() {
                                 val bookId = backStackEntry.arguments?.getString("bookId") ?: ""
                                 DetailedBookView(bookId, navController)
                             }
-                            composable("${Destinations.DETAILED_TV_VIEW}/{tvId}"){backStackEntry ->
+                            composable("${Destinations.DETAILED_TV_VIEW}/{tvId}") { backStackEntry ->
                                 val tvId = backStackEntry.arguments?.getString("tvId") ?: ""
                                 DetailedTvView(tvId = tvId, navController = navController)
                             }
-                            composable("${Destinations.DETAILED_MOVIE_VIEW}/{movieId}"){backStackEntry ->
+                            composable("${Destinations.DETAILED_MOVIE_VIEW}/{movieId}") { backStackEntry ->
                                 val movieId = backStackEntry.arguments?.getString("movieId") ?: ""
                                 DetailedMovieView(movieId = movieId, navController = navController)
                             }
@@ -285,27 +285,13 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Home(navController: NavController) {
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize()) {
             Searchbar(navController)
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Home",
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
+            MovieList(movies = trendingMovieList, navController = navController)
         }
     }
 }
@@ -410,7 +396,11 @@ fun Searchbar(navController: NavController) {
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun SearchResultPage(query: String, navController: NavController, viewModel: SearchViewModel = viewModel()) {
+fun SearchResultPage(
+    query: String,
+    navController: NavController,
+    viewModel: SearchViewModel = viewModel()
+) {
     Log.d("SearchResult", "SearchResult composable loaded")
     LaunchedEffect(query) {
         viewModel.fetchBooks(query)
@@ -506,7 +496,6 @@ fun TrendingPage(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
     ) {
         Box(
             modifier = Modifier
@@ -524,7 +513,10 @@ fun TrendingPage(navController: NavController) {
                     ),
                     modifier = Modifier.width(120.dp)
                 ) {
-                    Text(text = "Bücher", color = if (selectedButton == "Bücher") Color.White else Color.Black)
+                    Text(
+                        text = "Bücher",
+                        color = if (selectedButton == "Bücher") Color.White else Color.Black
+                    )
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -536,7 +528,10 @@ fun TrendingPage(navController: NavController) {
                     ),
                     modifier = Modifier.width(120.dp)
                 ) {
-                    Text(text = "Filme", color = if (selectedButton == "Filme") Color.White else Color.Black)
+                    Text(
+                        text = "Filme",
+                        color = if (selectedButton == "Filme") Color.White else Color.Black
+                    )
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -548,7 +543,10 @@ fun TrendingPage(navController: NavController) {
                     ),
                     modifier = Modifier.width(120.dp)
                 ) {
-                    Text(text = "Serien", color = if (selectedButton == "Serien") Color.White else Color.Black)
+                    Text(
+                        text = "Serien",
+                        color = if (selectedButton == "Serien") Color.White else Color.Black
+                    )
                 }
             }
         }
@@ -560,9 +558,11 @@ fun TrendingPage(navController: NavController) {
                 "Bücher" -> {
                     BookList(books = trendingBookList, navController = navController)
                 }
+
                 "Filme" -> {
                     MovieList(movies = trendingMovieList, navController = navController)
                 }
+
                 "Serien" -> {
                     TVList(tvs = trendingTVList, navController = navController)
                 }
@@ -600,13 +600,17 @@ fun MovieList(movies: List<Movie>, modifier: Modifier = Modifier, navController:
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(movies) { movie ->
-            MovieCard(movie = movie, navController = navController ,modifier = Modifier.fillMaxWidth())
+            MovieCard(
+                movie = movie,
+                navController = navController,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
 
 @Composable
-fun MovieCard(movie: Movie,navController: NavController ,modifier: Modifier = Modifier) {
+fun MovieCard(movie: Movie, navController: NavController, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.padding(4.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Black),
@@ -630,8 +634,12 @@ fun MovieCard(movie: Movie,navController: NavController ,modifier: Modifier = Mo
                 contentScale = ContentScale.FillBounds
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = if (movie.title?.length!! > 15) movie.title.take(15)+"..." else movie.title.toString(), modifier = Modifier.padding(4.dp), Color.White)
-            Text(text = " "+movie.release_date, color = Color.LightGray)
+            Text(
+                text = if (movie.title?.length!! > 15) movie.title.take(15) + "..." else movie.title.toString(),
+                modifier = Modifier.padding(4.dp),
+                Color.White
+            )
+            Text(text = " " + movie.release_date, color = Color.LightGray)
         }
     }
 }
@@ -652,7 +660,7 @@ fun TVList(tvs: List<TV>, modifier: Modifier = Modifier, navController: NavContr
 }
 
 @Composable
-fun TVCard(tv: TV, navController:NavController, modifier: Modifier = Modifier) {
+fun TVCard(tv: TV, navController: NavController, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.padding(4.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Black),
@@ -676,8 +684,12 @@ fun TVCard(tv: TV, navController:NavController, modifier: Modifier = Modifier) {
                 contentScale = ContentScale.FillBounds
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = if (tv.original_name?.length!! > 15) tv.original_name.take(15)+"..." else tv.original_name.toString(), modifier = Modifier.padding(4.dp), Color.White)
-            Text(text = " "+tv.first_air_date, color = Color.LightGray)
+            Text(
+                text = if (tv.original_name?.length!! > 15) tv.original_name.take(15) + "..." else tv.original_name.toString(),
+                modifier = Modifier.padding(4.dp),
+                Color.White
+            )
+            Text(text = " " + tv.first_air_date, color = Color.LightGray)
         }
     }
 }
@@ -723,8 +735,12 @@ fun BookCard(book: Book, navController: NavController, modifier: Modifier = Modi
                 contentScale = ContentScale.FillBounds
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = if (book.title.length > 15) book.title.take(15)+"..." else book.title, modifier = Modifier.padding(4.dp), Color.White)
-            Text(text = " "+book.authors?.get(0).toString(), color = Color.LightGray)
+            Text(
+                text = if (book.title.length > 15) book.title.take(15) + "..." else book.title,
+                modifier = Modifier.padding(4.dp),
+                Color.White
+            )
+            Text(text = " " + book.authors?.get(0).toString(), color = Color.LightGray)
         }
     }
 }
@@ -732,7 +748,11 @@ fun BookCard(book: Book, navController: NavController, modifier: Modifier = Modi
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun DetailedBookView(bookId: String, navController: NavController, viewModel: BookViewModel = viewModel()) {
+fun DetailedBookView(
+    bookId: String,
+    navController: NavController,
+    viewModel: BookViewModel = viewModel()
+) {
     val book by viewModel.book.collectAsState()
 
     LaunchedEffect(bookId) {
@@ -768,13 +788,15 @@ fun DetailedBookView(bookId: String, navController: NavController, viewModel: Bo
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = 85.dp),
+                    .padding(top = 80.dp)
+                    .padding(5.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 item {
                     val imageUrl1 = "https://books.google.com/books/content?id="
                     val imageUrl2 = "&printsec=frontcover&img=1&zoom=3&edge=curl&source=gbs_api"
-                    val painter = rememberAsyncImagePainter(model = imageUrl1 + book?.id + imageUrl2)
+                    val painter =
+                        rememberAsyncImagePainter(model = imageUrl1 + book?.id + imageUrl2)
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -793,7 +815,11 @@ fun DetailedBookView(bookId: String, navController: NavController, viewModel: Bo
                 }
                 item {
                     Spacer(modifier = Modifier.padding(top = 10.dp))
-                    Text(text = book?.title.toString(), fontSize = 40.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = book?.title.toString(),
+                        fontSize = 40.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
                 item {
                     Text(text = "Autor: " + (book?.authors?.get(0) ?: "Kein(e) Autor(en) bekannt!"))
@@ -802,19 +828,33 @@ fun DetailedBookView(bookId: String, navController: NavController, viewModel: Bo
                     Text(text = "Sprache: " + (book?.language ?: "Keine Sprache vorhanden!"))
                 }
                 item {
-                    Text(text = "Seitenanzahl: " + (book?.pageCount?.toString() ?: "Keine Seitenanzahl vorhanden!"))
+                    Text(
+                        text = "Seitenanzahl: " + (book?.pageCount?.toString()
+                            ?: "Keine Seitenanzahl vorhanden!")
+                    )
                 }
                 item {
-                    Text(text = "Veröffentlichungsdatum: " + (book?.publishedDate ?: "Kein Veröffentlichungsdatum vorhanden!"))
+                    Text(
+                        text = "Veröffentlichungsdatum: " + (book?.publishedDate
+                            ?: "Kein Veröffentlichungsdatum vorhanden!")
+                    )
                 }
                 item {
-                    Text(text = "Beschreibung", fontWeight = FontWeight.Bold, fontSize = 20.sp, modifier = Modifier.padding(top = 20.dp))
+                    Text(
+                        text = "Beschreibung",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        modifier = Modifier.padding(top = 20.dp)
+                    )
                     val description = book?.description ?: "Keine Beschreibung vorhanden!"
                     val plainDescription = removeHtmlTags(description)
                     Text(text = plainDescription)
                 }
                 item {
-                    AmazonButton(bookTitle = book?.title.toString(), author = book?.authors?.get(0).toString())
+                    AmazonButton(
+                        bookTitle = book?.title.toString(),
+                        author = book?.authors?.get(0).toString()
+                    )
                 }
             }
         }
@@ -824,7 +864,11 @@ fun DetailedBookView(bookId: String, navController: NavController, viewModel: Bo
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun DetailedTvView(tvId: String, navController: NavController, viewModel: TvViewModel = viewModel()){
+fun DetailedTvView(
+    tvId: String,
+    navController: NavController,
+    viewModel: TvViewModel = viewModel()
+) {
     val tv by viewModel.tv.collectAsState()
 
     LaunchedEffect(tvId) {
@@ -860,7 +904,8 @@ fun DetailedTvView(tvId: String, navController: NavController, viewModel: TvView
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = 85.dp),
+                    .padding(top = 80.dp)
+                    .padding(5.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 item {
@@ -883,7 +928,11 @@ fun DetailedTvView(tvId: String, navController: NavController, viewModel: TvView
                 }
                 item {
                     Spacer(modifier = Modifier.padding(top = 10.dp))
-                    Text(text = tv?.original_name.toString(), fontSize = 40.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = tv?.original_name.toString(),
+                        fontSize = 40.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
                 item {
                     Text(text = "Sprache: " + (tv?.original_language ?: "Keine Sprache vorhanden!"))
@@ -892,16 +941,27 @@ fun DetailedTvView(tvId: String, navController: NavController, viewModel: TvView
                     //TODO: Länge bzw. Folgenanzahl
                 }
                 item {
-                    Text(text = "Veröffentlichungsdatum: " + (tv?.first_air_date ?: "Kein Veröffentlichungsdatum vorhanden!"))
+                    Text(
+                        text = "Veröffentlichungsdatum: " + (tv?.first_air_date
+                            ?: "Kein Veröffentlichungsdatum vorhanden!")
+                    )
                 }
                 item {
-                    Text(text = "Beschreibung", fontWeight = FontWeight.Bold, fontSize = 20.sp, modifier = Modifier.padding(top = 20.dp))
+                    Text(
+                        text = "Beschreibung",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        modifier = Modifier.padding(top = 20.dp)
+                    )
                     val description = tv?.overview ?: "Keine Beschreibung vorhanden!"
                     val plainDescription = removeHtmlTags(description)
                     Text(text = plainDescription)
                 }
                 item {
-                    AmazonButton(bookTitle = tv?.original_name.toString(), author = tv?.first_air_date.toString())
+                    AmazonButton(
+                        bookTitle = tv?.original_name.toString(),
+                        author = tv?.first_air_date.toString()
+                    )
                 }
             }
         }
@@ -911,9 +971,13 @@ fun DetailedTvView(tvId: String, navController: NavController, viewModel: TvView
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun DetailedMovieView(movieId: String, navController: NavController, viewModel: MovieViewModel = viewModel()) {
+fun DetailedMovieView(
+    movieId: String,
+    navController: NavController,
+    viewModel: MovieViewModel = viewModel()
+) {
     val movie by viewModel.movie.collectAsState()
-    
+
     LaunchedEffect(movieId) {
         viewModel.getMovieByID(movieId)
     }
@@ -947,7 +1011,8 @@ fun DetailedMovieView(movieId: String, navController: NavController, viewModel: 
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = 85.dp),
+                    .padding(top = 80.dp)
+                    .padding(5.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 item {
@@ -970,25 +1035,43 @@ fun DetailedMovieView(movieId: String, navController: NavController, viewModel: 
                 }
                 item {
                     Spacer(modifier = Modifier.padding(top = 10.dp))
-                    Text(text = movie?.title.toString(), fontSize = 40.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = movie?.title.toString(),
+                        fontSize = 40.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
                 item {
-                    Text(text = "Sprache: " + (movie?.original_language ?: "Keine Sprache vorhanden!"))
+                    Text(
+                        text = "Sprache: " + (movie?.original_language
+                            ?: "Keine Sprache vorhanden!")
+                    )
                 }
                 item {
                     //TODO: Länge bzw. Folgenanzahl
                 }
                 item {
-                    Text(text = "Veröffentlichungsdatum: " + (movie?.release_date ?: "Kein Veröffentlichungsdatum vorhanden!"))
+                    Text(
+                        text = "Veröffentlichungsdatum: " + (movie?.release_date
+                            ?: "Kein Veröffentlichungsdatum vorhanden!")
+                    )
                 }
                 item {
-                    Text(text = "Beschreibung", fontWeight = FontWeight.Bold, fontSize = 20.sp, modifier = Modifier.padding(top = 20.dp))
+                    Text(
+                        text = "Beschreibung",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        modifier = Modifier.padding(top = 20.dp)
+                    )
                     val description = movie?.overview ?: "Keine Beschreibung vorhanden!"
                     val plainDescription = removeHtmlTags(description)
                     Text(text = plainDescription)
                 }
                 item {
-                    AmazonButton(bookTitle = movie?.title.toString(), author = movie?.original_language.toString())
+                    AmazonButton(
+                        bookTitle = movie?.title.toString(),
+                        author = movie?.original_language.toString()
+                    )
                 }
             }
         }
@@ -1001,18 +1084,24 @@ fun removeHtmlTags(htmlText: String): String {
 
 @Composable
 fun AmazonButton(bookTitle: String, author: String) {
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { }
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { }
 
     Button(
         onClick = { launchAmazon(bookTitle, author, launcher) },
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Black)
+            containerColor = Color.Black
+        )
     ) {
         Text("Kauf auf Amazon", color = Color.White)
     }
 }
 
-private fun launchAmazon(bookTitle: String, author: String, launcher: ActivityResultLauncher<Intent>) {
+private fun launchAmazon(
+    bookTitle: String,
+    author: String,
+    launcher: ActivityResultLauncher<Intent>
+) {
     val searchQuery = "${Uri.encode(bookTitle)}+${Uri.encode(author)}"
     val amazonUrl = "https://www.amazon.com/s?k=$searchQuery"
     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(amazonUrl))
@@ -1084,19 +1173,19 @@ fun Test() {
             )
         }
 
-            val bookResponse = APIBook.retrofitService.getBookByID("uehtAAAAQBAJ")
-            val book = Book(
-                id = bookResponse.id,
-                title = bookResponse.volumeInfo.title,
-                authors = bookResponse.volumeInfo.authors,
-                publishedDate = bookResponse.volumeInfo.publishedDate,
-                description = bookResponse.volumeInfo.description,
-                pageCount = bookResponse.volumeInfo.pageCount,
-                categories = bookResponse.volumeInfo.categories,
-                language = bookResponse.volumeInfo.language,
-                imageUrl = bookResponse.volumeInfo.imageLinks?.thumbnail
-            )
-            //bookbyidList = listOf(book)
+        val bookResponse = APIBook.retrofitService.getBookByID("uehtAAAAQBAJ")
+        val book = Book(
+            id = bookResponse.id,
+            title = bookResponse.volumeInfo.title,
+            authors = bookResponse.volumeInfo.authors,
+            publishedDate = bookResponse.volumeInfo.publishedDate,
+            description = bookResponse.volumeInfo.description,
+            pageCount = bookResponse.volumeInfo.pageCount,
+            categories = bookResponse.volumeInfo.categories,
+            language = bookResponse.volumeInfo.language,
+            imageUrl = bookResponse.volumeInfo.imageLinks?.thumbnail
+        )
+        //bookbyidList = listOf(book)
     }
     //BookList(books = bookbyidList, navController = navController)
     //MovieList(movies = movieList)
