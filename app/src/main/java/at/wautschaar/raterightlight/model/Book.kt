@@ -21,7 +21,7 @@ data class Book(
 }
 
 @Serializable
-data class BookResponse(
+data class BookListResponse(
     val items: List<BookItem>
 )
 
@@ -37,7 +37,7 @@ data class VolumeInfo(
     val title: String,
     val authors: List<String>,
     val description: String,
-    val imageLinks: ImageLinks,
+    val imageLinks: ImageLinks?,
     val publishedDate: String,
     val language: String,
     val pageCount: Int,
@@ -46,7 +46,16 @@ data class VolumeInfo(
 
 @Serializable
 data class ImageLinks(
-    @SerialName("smallThumbnail")
-    val smallThumbnail: String,
-    val thumbnail: String
+    val smallThumbnail: String?,
+    val thumbnail: String?
+)
+
+@Serializable
+data class SingleBookResponse(
+    val kind: String,
+    val id: String,
+    val etag: String,
+    val selfLink: String,
+    @SerialName("volumeInfo")
+    val volumeInfo: VolumeInfo
 )

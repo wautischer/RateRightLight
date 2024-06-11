@@ -1,4 +1,4 @@
-package at.wautschaar.raterightlight
+package at.wautschaar.raterightlight.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -67,7 +67,7 @@ class SearchViewModel: ViewModel() {
                         pageCount = bookItem.volumeInfo.pageCount,
                         categories = bookItem.volumeInfo.categories,
                         language = bookItem.volumeInfo.language,
-                        imageUrl = bookItem.volumeInfo.imageLinks.thumbnail ?: ""
+                        imageUrl = bookItem.volumeInfo.imageLinks?.thumbnail ?: ""
                     )
                 }
                 _searchResults.value = newData

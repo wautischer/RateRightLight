@@ -1,6 +1,8 @@
 package at.wautschaar.raterightlight.network
 
+import at.wautschaar.raterightlight.model.Movie
 import at.wautschaar.raterightlight.model.MovieResponse
+import at.wautschaar.raterightlight.model.TV
 import at.wautschaar.raterightlight.model.TVResponse
 import at.wautschaar.raterightlight.model.TrendingMovieResponse
 import at.wautschaar.raterightlight.model.TrendingTVResponse
@@ -10,6 +12,7 @@ import okhttp3.Request
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 private const val BASE_URL = "https://api.themoviedb.org/3/"
@@ -58,6 +61,12 @@ interface APIServiceMDB {
 
     @GET("trending/tv/day?language=en-US")
     suspend fun getTrendingTV(): TrendingTVResponse
+
+    @GET("tv/{series_id}?language=en-US")
+    suspend fun getTvByID(@Path("series_id") tvId: String): TV
+
+    @GET("movie/{movie_id}?language=en-US")
+    suspend fun getMovieByID(@Path("movie_id") movieId: String): Movie
 }
 
 object APIMDB {
