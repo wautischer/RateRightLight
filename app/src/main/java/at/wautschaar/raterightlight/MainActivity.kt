@@ -3,6 +3,7 @@
 package at.wautschaar.raterightlight
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -80,6 +81,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
@@ -87,6 +89,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -496,7 +499,9 @@ fun Settings() {
 
 @Composable
 fun TrendingPage(navController: NavController) {
-    var selectedButton by remember { mutableStateOf("Bücher") }
+    val context = LocalContext.current
+
+    var selectedButton by rememberSaveable { mutableStateOf(loadSelectedButton(context)) }
 
     Column(
         modifier = Modifier
@@ -525,7 +530,7 @@ fun TrendingPage(navController: NavController) {
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Button(
-                    onClick = { selectedButton = "Filme" },
+                    onClick = { selectedButton = "Filme"; },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (selectedButton == "Filme") Color.Black else Color.LightGray
                     ),
@@ -537,7 +542,7 @@ fun TrendingPage(navController: NavController) {
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Button(
-                    onClick = { selectedButton = "Serien" },
+                    onClick = { selectedButton = "Serien"; },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (selectedButton == "Serien") Color.Black else Color.LightGray
                     ),
@@ -563,6 +568,25 @@ fun TrendingPage(navController: NavController) {
                 }
             }
         }
+    }
+    LaunchedEffect(selectedButton) {
+        saveSelectedButton(context, selectedButton)
+    }
+}
+
+private const val PREFS_NAME = "com.example.myapp.PREFS_NAME"
+private const val SELECTED_BUTTON_KEY = "SELECTED_BUTTON_KEY"
+
+private fun loadSelectedButton(context: Context): String {
+    val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    return sharedPreferences.getString(SELECTED_BUTTON_KEY, "Bücher") ?: "Bücher"
+}
+
+private fun saveSelectedButton(context: Context, selectedButton: String) {
+    val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    sharedPreferences.edit {
+        putString(SELECTED_BUTTON_KEY, selectedButton)
+        apply()
     }
 }
 
@@ -606,7 +630,8 @@ fun MovieCard(movie: Movie,navController: NavController ,modifier: Modifier = Mo
                 contentScale = ContentScale.FillBounds
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = movie.title.toString(), modifier = Modifier.padding(4.dp), Color.White)
+            Text(text = if (movie.title?.length!! > 15) movie.title.take(15)+"..." else movie.title.toString(), modifier = Modifier.padding(4.dp), Color.White)
+            Text(text = " "+movie.release_date, color = Color.LightGray)
         }
     }
 }
@@ -651,7 +676,8 @@ fun TVCard(tv: TV, navController:NavController, modifier: Modifier = Modifier) {
                 contentScale = ContentScale.FillBounds
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = tv.original_name.toString(), modifier = Modifier.padding(4.dp), Color.White)
+            Text(text = if (tv.original_name?.length!! > 15) tv.original_name.take(15)+"..." else tv.original_name.toString(), modifier = Modifier.padding(4.dp), Color.White)
+            Text(text = " "+tv.first_air_date, color = Color.LightGray)
         }
     }
 }
@@ -697,7 +723,8 @@ fun BookCard(book: Book, navController: NavController, modifier: Modifier = Modi
                 contentScale = ContentScale.FillBounds
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = book.title, modifier = Modifier.padding(4.dp), Color.White)
+            Text(text = if (book.title.length > 15) book.title.take(15)+"..." else book.title, modifier = Modifier.padding(4.dp), Color.White)
+            Text(text = " "+book.authors?.get(0).toString(), color = Color.LightGray)
         }
     }
 }
