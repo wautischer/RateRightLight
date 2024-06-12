@@ -45,11 +45,9 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.List
 import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -82,7 +80,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -105,7 +102,6 @@ import at.wautschaar.raterightlight.viewmodel.BookViewModel
 import at.wautschaar.raterightlight.viewmodel.MovieViewModel
 import at.wautschaar.raterightlight.viewmodel.SearchViewModel
 import at.wautschaar.raterightlight.viewmodel.TvViewModel
-import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 
 private const val IMAGE_URL = "https://image.tmdb.org/t/p/original/"
@@ -211,6 +207,7 @@ class MainActivity : ComponentActivity() {
                                         navController.navigate(Destinations.HOME_ROUTE)
                                     }
                                 ),
+                                /*
                                 BottomNavigationItem(
                                     title = "Settings",
                                     selectedIcon = Icons.Filled.Settings,
@@ -219,6 +216,7 @@ class MainActivity : ComponentActivity() {
                                         navController.navigate(Destinations.SETTINGS_ROUTE)
                                     }
                                 ),
+                                 */
                                 BottomNavigationItem(
                                     title = "Trending",
                                     selectedIcon = Icons.Filled.Notifications,
@@ -257,7 +255,7 @@ class MainActivity : ComponentActivity() {
                         ) {
                             composable(Destinations.MY_LIST_ROUTE) { MyList(navController) }
                             composable(Destinations.HOME_ROUTE) { Home(navController) }
-                            composable(Destinations.SETTINGS_ROUTE) { Settings() }
+                            //composable(Destinations.SETTINGS_ROUTE) { Settings() }
                             composable(Destinations.TRENDING_ROUTE) { TrendingPage(navController) }
                             composable("${Destinations.DETAILED_BOOK_VIEW}/{bookId}") { backStackEntry ->
                                 val bookId = backStackEntry.arguments?.getString("bookId") ?: ""
@@ -291,7 +289,7 @@ fun Home(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            MovieList(movies = trendingMovieList, navController = navController)
+            //MovieList(movies = trendingMovieList, navController = navController)
         }
     }
 }
@@ -461,12 +459,14 @@ fun BookItem(book: Book) {
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            AsyncImage(
-                model = book.imageUrl,
+            val imageUrl1 = "https://books.google.com/books/content?id="
+            val imageUrl2 = "&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
+            val painter = rememberAsyncImagePainter(model = imageUrl1 + book.id + imageUrl2)
+            Image(
+                painter = painter,
                 contentDescription = book.title,
                 modifier = Modifier.size(100.dp),
-                contentScale = ContentScale.Crop,
-                error = painterResource(R.drawable.ic_launcher_foreground)
+                contentScale = ContentScale.Crop
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column(
