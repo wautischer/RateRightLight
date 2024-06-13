@@ -437,7 +437,7 @@ fun SearchResultPage(
                     Spacer(modifier = Modifier.height(60.dp))
                 }
                 items(searchResults) { book ->
-                    BookItem(book = book)
+                    BookItem(book = book, navController = navController)
                 }
             }
         }
@@ -445,14 +445,15 @@ fun SearchResultPage(
 }
 
 @Composable
-fun BookItem(book: Book) {
+fun BookItem(book: Book, navController: NavController) {
     book.imageUrl?.let { Log.d("imageURL", it) }
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
         shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        onClick = {
+            navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${book.id}")
+        }
     ) {
         Row(
             modifier = Modifier
