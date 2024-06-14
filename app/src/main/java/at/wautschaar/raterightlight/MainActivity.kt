@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -284,15 +285,23 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun Home(navController: NavController) {
     Column(modifier = Modifier.fillMaxSize()) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Searchbar(navController)
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                //Searchbar(navController)
+                Text(text = "Searchbar")
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
-
-            //MovieList(movies = trendingMovieList, navController = navController)
+        }
+        Box(modifier = Modifier.fillMaxSize()) {
+            VerticalBookList(books = trendingBookList, navController = navController)
         }
     }
 }
+
 
 @Composable
 fun MyList(navController: NavController) {
@@ -448,7 +457,9 @@ fun SearchResultPage(
 fun BookItem(book: Book, navController: NavController) {
     book.imageUrl?.let { Log.d("imageURL", it) }
     Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
         shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         onClick = {
@@ -732,6 +743,67 @@ fun BookCard(book: Book, navController: NavController, modifier: Modifier = Modi
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp)
+                    .clip(RoundedCornerShape(10.dp)),
+                contentScale = ContentScale.FillBounds
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = if (book.title.length > 15) book.title.take(15) + "..." else book.title,
+                modifier = Modifier.padding(4.dp),
+                Color.White
+            )
+            Text(text = " " + book.authors?.get(0).toString(), color = Color.LightGray)
+        }
+    }
+}
+
+@Composable
+fun VerticalBookList(
+    books: List<Book>,
+    modifier: Modifier = Modifier,
+    navController: NavController
+) {
+    println("VerticalBookList geladen!")
+    LazyRow(
+        modifier = modifier.padding(8.dp),
+        contentPadding = PaddingValues(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(books) { book ->
+            VerticalBookCard(
+                book = book,
+                navController = navController,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
+fun VerticalBookCard(book: Book, navController: NavController, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier
+            .padding(4.dp)
+            .width(300.dp)
+            .height(450.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Black),
+        shape = RoundedCornerShape(10.dp),
+        onClick = {
+            navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${book.id}")
+        }
+    ) {
+        Column(
+            modifier = Modifier.padding(8.dp)
+        ) {
+            val imageURL =
+                "https://books.google.com/books/content?id=" + book.id + "&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
+            val painter = rememberAsyncImagePainter(model = imageURL)
+            Image(
+                painter = painter,
+                contentDescription = book.title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(350.dp)
                     .clip(RoundedCornerShape(10.dp)),
                 contentScale = ContentScale.FillBounds
             )
