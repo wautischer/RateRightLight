@@ -308,6 +308,7 @@ fun MyList(navController: NavController) {
     }
 }
 
+//region search function
 @Composable
 fun Searchbar(navController: NavController) {
     val viewModel = viewModel<SearchViewModel>()
@@ -592,13 +593,9 @@ fun TVItem(tvShow: TV, navController: NavController) {
         }
     }
 }
+// endregion
 
-
-@Composable
-fun Settings() {
-    Log.d("Settings", "Settings composable loaded")
-}
-
+//region TrendingPage
 @Composable
 fun TrendingPage(navController: NavController) {
     val context = LocalContext.current
@@ -856,7 +853,9 @@ fun BookCard(book: Book, navController: NavController, modifier: Modifier = Modi
         }
     }
 }
+// endregion
 
+//region DetailPage
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -1219,6 +1218,7 @@ private fun launchAmazon(
     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(amazonUrl))
     launcher.launch(intent)
 }
+// endregion
 
 //region Movie/TV Test composable and Movie/TV/Book Card/List
 @Composable
