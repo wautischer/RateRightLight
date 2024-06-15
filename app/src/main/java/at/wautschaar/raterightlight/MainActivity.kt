@@ -14,6 +14,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -102,13 +103,10 @@ import at.wautschaar.raterightlight.realm.HistoryEntity
 import at.wautschaar.raterightlight.ui.theme.RateRightLightTheme
 import at.wautschaar.raterightlight.viewmodel.BookViewModel
 import at.wautschaar.raterightlight.viewmodel.MovieViewModel
+import at.wautschaar.raterightlight.viewmodel.RealmViewmodel
 import at.wautschaar.raterightlight.viewmodel.SearchViewModel
 import at.wautschaar.raterightlight.viewmodel.TvViewModel
 import coil.compose.rememberAsyncImagePainter
-import io.realm.kotlin.Realm
-import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.ext.query
-import io.realm.kotlin.query.RealmResults
 
 private const val IMAGE_URL = "https://image.tmdb.org/t/p/original/"
 private var trendingMovieList = emptyList<Movie>()
@@ -116,15 +114,6 @@ private var trendingTVList = emptyList<TV>()
 private var trendingBookList = emptyList<Book>()
 private var history = mutableMapOf<String, String>()
 private var historyCount = 0
-
-val config = RealmConfiguration.Builder(setOf(HistoryEntity::class))
-    .name("myrealm.realm")
-    .schemaVersion(1)
-    .deleteRealmIfMigrationNeeded()
-    .build()
-val realm: Realm = Realm.open(config)
-
-val historyRealm: RealmResults<HistoryEntity> = realm.query<HistoryEntity>().find()
 
 object Destinations {
     const val MY_LIST_ROUTE = "MyList"
@@ -144,6 +133,9 @@ data class BottomNavigationItem(
 )
 
 class MainActivity : ComponentActivity() {
+
+    private val RealmviewModel: RealmViewmodel by viewModels()
+
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -270,7 +262,7 @@ class MainActivity : ComponentActivity() {
                             startDestination = Destinations.HOME_ROUTE,
                             modifier = Modifier.padding(innerPadding)
                         ) {
-                            composable(Destinations.MY_LIST_ROUTE) { MyList(navController) }
+                            composable(Destinations.MY_LIST_ROUTE) { MyList(navController, RealmviewModel = RealmviewModel) }
                             composable(Destinations.HOME_ROUTE) { Home(navController) }
                             //composable(Destinations.SETTINGS_ROUTE) { Settings() }
                             composable(Destinations.TRENDING_ROUTE) { TrendingPage(navController) }
@@ -346,7 +338,7 @@ fun Home(navController: NavController) {
 }
 
 @Composable
-fun MyList(navController: NavController) {
+fun MyList(navController: NavController, RealmviewModel: RealmViewmodel) {
     Log.d("MyList", "MyList composable loaded")
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -354,7 +346,7 @@ fun MyList(navController: NavController) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "MyList")
+            TestRealm(viewmodel = RealmviewModel)
         }
     }
 }
@@ -1225,6 +1217,14 @@ private fun launchAmazon(
     launcher.launch(intent)
 }
 
+@Composable
+fun HistoryCard(history: HistoryEntity, modifier: Modifier = Modifier) {
+    Column (modifier = Modifier) {
+        Text(text = history.contentId)
+        Text(text = history.contentType)
+    }
+}
+
 //region Movie/TV Test composable and Movie/TV/Book Card/List
 @Composable
 fun Test() {
@@ -1309,5 +1309,16 @@ fun Test() {
     //TVList(tvs = tvList)
     //MovieList(movies = trendingList)
     //TVList(tvs = trendingTVList)
+}
+
+@Composable
+fun TestRealm(viewmodel: RealmViewmodel){
+    val histories by viewmodel.histories.collectAsState()
+    LazyColumn (modifier = Modifier
+        .fillMaxSize()) {
+        items(histories) { history ->
+            HistoryCard(history = history, modifier = Modifier.fillMaxWidth())
+        }
+    }
 }
 //endregion
