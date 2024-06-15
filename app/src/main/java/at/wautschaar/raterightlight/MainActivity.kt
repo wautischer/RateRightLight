@@ -312,7 +312,9 @@ fun MyList(navController: NavController) {
 fun Searchbar(navController: NavController) {
     val viewModel = viewModel<SearchViewModel>()
     val searchText by viewModel.searchText.collectAsState()
-    val data by viewModel.data.collectAsState()
+    val bookData by viewModel.bookData.collectAsState()
+    val movieData by viewModel.movieData.collectAsState()
+    val tvData by viewModel.tvData.collectAsState()
     val isSearching by viewModel.isSearching.collectAsState()
 
     Box(
@@ -328,6 +330,8 @@ fun Searchbar(navController: NavController) {
                 onValueChange = { newSearchText ->
                     viewModel.onSearchTextChange(newSearchText)
                     viewModel.fetchBooks(newSearchText)
+                    viewModel.fetchMovies(newSearchText)
+                    viewModel.fetchTVShows(newSearchText)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -377,9 +381,25 @@ fun Searchbar(navController: NavController) {
                         .fillMaxSize()
                         .weight(1f)
                 ) {
-                    items(data) { item ->
+                    items(bookData) { item ->
                         Text(
                             text = "${item.title}",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 10.dp)
+                        )
+                    }
+                    items(movieData) { item ->
+                        Text(
+                            text = "${item.title}",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 10.dp)
+                        )
+                    }
+                    items(tvData) { item ->
+                        Text(
+                            text = "${item.original_name}",
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 10.dp)
@@ -402,9 +422,13 @@ fun SearchResultPage(
     Log.d("SearchResult", "SearchResult composable loaded")
     LaunchedEffect(query) {
         viewModel.fetchBooks(query)
+        viewModel.fetchMovies(query)
+        viewModel.fetchTVShows(query)
     }
 
-    val searchResults by viewModel.searchResults.collectAsState()
+    val bookSearchResults by viewModel.bookSearchResults.collectAsState()
+    val movieSearchResults by viewModel.movieSearchResults.collectAsState()
+    val tvSearchResults by viewModel.tvSearchResults.collectAsState()
 
     Scaffold(
         topBar = {
@@ -436,8 +460,14 @@ fun SearchResultPage(
                 item {
                     Spacer(modifier = Modifier.height(60.dp))
                 }
-                items(searchResults) { book ->
+                items(bookSearchResults) { book ->
                     BookItem(book = book, navController = navController)
+                }
+                items(movieSearchResults) { movie ->
+                    MovieItem(movie = movie, navController = navController)
+                }
+                items(tvSearchResults) { tvShow ->
+                    TVItem(tvShow = tvShow, navController = navController)
                 }
             }
         }
@@ -482,6 +512,87 @@ fun BookItem(book: Book, navController: NavController) {
         }
     }
 }
+
+@Composable
+fun MovieItem(movie: Movie, navController: NavController) {
+    movie.poster_path?.let { Log.d("posterPath", it) }
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        shape = RoundedCornerShape(8.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        onClick = {
+            navController.navigate("${Destinations.DETAILED_MOVIE_VIEW}/${movie.id}")
+        }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            val imageUrl = "https://image.tmdb.org/t/p/w500" + movie.poster_path
+            val painter = rememberAsyncImagePainter(model = imageUrl)
+            Image(
+                painter = painter,
+                contentDescription = movie.title,
+                modifier = Modifier.size(100.dp),
+                contentScale = ContentScale.Crop
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(
+                modifier = Modifier.align(Alignment.CenterVertically)
+            ) {
+                Text(text = movie.title ?: "Unknown Title", style = MaterialTheme.typography.headlineMedium)
+                Text(
+                    text = movie.release_date ?: "Unknown Date",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun TVItem(tvShow: TV, navController: NavController) {
+    tvShow.poster_path?.let { Log.d("posterPath", it) }
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        shape = RoundedCornerShape(8.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        onClick = {
+            navController.navigate("${Destinations.DETAILED_TV_VIEW}/${tvShow.id}")
+        }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            val imageUrl = "https://image.tmdb.org/t/p/w500" + tvShow.poster_path
+            val painter = rememberAsyncImagePainter(model = imageUrl)
+            Image(
+                painter = painter,
+                contentDescription = tvShow.original_name,
+                modifier = Modifier.size(100.dp),
+                contentScale = ContentScale.Crop
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(
+                modifier = Modifier.align(Alignment.CenterVertically)
+            ) {
+                Text(text = tvShow.original_name ?: "Unknown Name", style = MaterialTheme.typography.headlineMedium)
+                Text(
+                    text = tvShow.first_air_date ?: "Unknown Date",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+    }
+}
+
 
 @Composable
 fun Settings() {

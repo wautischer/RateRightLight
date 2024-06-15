@@ -4,53 +4,97 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import at.wautschaar.raterightlight.model.Book
+import at.wautschaar.raterightlight.model.Movie
+import at.wautschaar.raterightlight.model.TV
 import at.wautschaar.raterightlight.network.APIBook
+import at.wautschaar.raterightlight.network.APIMDB
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class SearchViewModel: ViewModel() {
+class SearchViewModel : ViewModel() {
     private val _searchText = MutableStateFlow("")
     val searchText = _searchText.asStateFlow()
 
     private val _isSearching = MutableStateFlow(false)
     val isSearching = _isSearching.asStateFlow()
 
-    private val _searchResults = MutableStateFlow<List<Book>>(emptyList())
-    val searchResults = _searchResults.asStateFlow()
+    private val _bookSearchResults = MutableStateFlow<List<Book>>(emptyList())
+    val bookSearchResults = _bookSearchResults.asStateFlow()
 
-    private val _data = MutableStateFlow<List<Book>>(emptyList())
+    private val _movieSearchResults = MutableStateFlow<List<Movie>>(emptyList())
+    val movieSearchResults = _movieSearchResults.asStateFlow()
 
-    val data = searchText
+    private val _tvSearchResults = MutableStateFlow<List<TV>>(emptyList())
+    val tvSearchResults = _tvSearchResults.asStateFlow()
+
+    private val _bookData= MutableStateFlow<List<Book>>(emptyList())
+    private val _movieData = MutableStateFlow<List<Movie>>(emptyList())
+    private val _tvData = MutableStateFlow<List<TV>>(emptyList())
+
+    val bookData = searchText
         .debounce(200L)
         .onEach { _isSearching.value = true }
-        .combine(_data) { text, item ->
+        .combine(_bookData) { text, item ->
             if (text.isBlank()) {
                 item
             } else {
                 delay(100L)
-                item.filter { it.doesMatchSearchQuery(text) }
+                item.filter { it.title?.contains(text, ignoreCase = true) == true }
             }
         }
         .onEach { _isSearching.value = false }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(500),
-            _data.value
+            _bookData.value
+        )
+
+    val movieData = searchText
+        .debounce(200L)
+        .onEach { _isSearching.value = true }
+        .combine(_movieData) { text, item ->
+            if (text.isBlank()) {
+                item
+            } else {
+                delay(100L)
+                item.filter { it.title?.contains(text, ignoreCase = true) == true }
+            }
+        }
+        .onEach { _isSearching.value = false }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(500),
+            _movieData.value
+        )
+
+    val tvData = searchText
+        .debounce(200L)
+        .onEach { _isSearching.value = true }
+        .combine(_tvData) { text, item ->
+            if (text.isBlank()) {
+                item
+            } else {
+                delay(100L)
+                item.filter { it.original_name?.contains(text, ignoreCase = true) == true }
+            }
+        }
+        .onEach { _isSearching.value = false }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(500),
+            _tvData.value
         )
 
     fun onSearchTextChange(text: String) {
         _searchText.value = text
-        _searchResults.value = emptyList()
-        _data.value = emptyList()
+        _bookSearchResults.value = emptyList()
+        _bookData.value = emptyList()
+        _movieSearchResults.value = emptyList()
+        _movieData.value = emptyList()
+        _tvSearchResults.value = emptyList()
+        _tvData.value = emptyList()
     }
-
 
     fun fetchBooks(query: String) {
         Log.d("fetchBooks", "fetchBooks")
@@ -70,9 +114,57 @@ class SearchViewModel: ViewModel() {
                         imageUrl = bookItem.volumeInfo.imageLinks?.thumbnail ?: ""
                     )
                 }
-                _searchResults.value = newData
-                _data.value = newData
+                _bookSearchResults.value = newData
+                _bookData.value = newData
                 Log.d("fetchBooks", "Books fetched: $response")
+            } catch (e: Exception) {
+                Log.d("Search", "Something went wrong: ${e.message}")
+            }
+        }
+    }
+
+    fun fetchMovies(query: String) {
+        Log.d("fetchMovies", "fetchMovies")
+        viewModelScope.launch {
+            try {
+                val response = APIMDB.retrofitService.getMovie(query)
+                val newData = response.results.map { movieItem ->
+                    Movie(
+                        id = movieItem.id,
+                        title = movieItem.title,
+                        original_language = movieItem.original_language,
+                        overview = movieItem.overview,
+                        poster_path = movieItem.poster_path,
+                        release_date = movieItem.release_date
+                    )
+                }
+                _movieSearchResults.value = newData
+                _movieData.value = newData
+                Log.d("fetchMovies", "Movies fetched: $response")
+            } catch (e: Exception) {
+                Log.d("Search", "Something went wrong: ${e.message}")
+            }
+        }
+    }
+
+    fun fetchTVShows(query: String) {
+        Log.d("fetchTVShows", "fetchTVShows")
+        viewModelScope.launch {
+            try {
+                val response = APIMDB.retrofitService.getTV(query)
+                val newData = response.results.map { tvItem ->
+                    TV(
+                        id = tvItem.id,
+                        original_language = tvItem.original_language,
+                        original_name = tvItem.original_name,
+                        overview = tvItem.overview,
+                        poster_path = tvItem.poster_path,
+                        first_air_date = tvItem.first_air_date
+                    )
+                }
+                _tvSearchResults.value = newData
+                _tvData.value = newData
+                Log.d("fetchTVShows", "TV shows fetched: $response")
             } catch (e: Exception) {
                 Log.d("Search", "Something went wrong: ${e.message}")
             }

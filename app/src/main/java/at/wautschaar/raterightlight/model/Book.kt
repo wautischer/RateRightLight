@@ -14,11 +14,7 @@ data class Book(
     val categories: List<String>?,
     val language: String?,
     val imageUrl: String?
-) {
-    fun doesMatchSearchQuery(query: String): Boolean {
-        return title.contains(query, ignoreCase = true)
-    }
-}
+)
 
 @Serializable
 data class BookListResponse(
