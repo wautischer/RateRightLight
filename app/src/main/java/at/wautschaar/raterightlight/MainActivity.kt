@@ -84,6 +84,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
@@ -108,6 +109,8 @@ private const val IMAGE_URL = "https://image.tmdb.org/t/p/original/"
 private var trendingMovieList = emptyList<Movie>()
 private var trendingTVList = emptyList<TV>()
 private var trendingBookList = emptyList<Book>()
+private var history = mutableMapOf<String, String>()
+private var historyCount = 0
 
 object Destinations {
     const val MY_LIST_ROUTE = "MyList"
@@ -283,23 +286,48 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Home(navController: NavController) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 16.dp)
-        ) {
-            Searchbar(navController = navController)
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 16.dp)
+            ) {
+                Searchbar(navController = navController)
+            }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        item {Spacer(modifier = Modifier.height(16.dp))}
 
-        Text(text = "Recommended for YOU")
-        VerticalBookList(
-            books = trendingBookList,
-            navController = navController,
-            modifier = Modifier.fillMaxSize()
-        )
+        item {
+            Text(
+                text = "Recommended for YOU",
+                modifier = Modifier.padding(horizontal = 16.dp),
+                fontSize = 24.sp,
+                textDecoration = TextDecoration.Underline
+            )
+            VerticalBookList(
+                books = trendingBookList,
+                navController = navController,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        item {
+            Text(
+                text = "History",
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+                fontSize = 24.sp,
+                textDecoration = TextDecoration.Underline
+            )
+        }
+
+        items(history.entries.toList()) { entry ->
+            Text(
+                text = "${entry.key}: ${entry.value}",
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            )
+        }
     }
 }
 
@@ -630,7 +658,7 @@ fun MovieCard(movie: Movie, navController: NavController, modifier: Modifier = M
         colors = CardDefaults.cardColors(containerColor = Color.Black),
         shape = RoundedCornerShape(10.dp),
         onClick = {
-            navController.navigate("${Destinations.DETAILED_MOVIE_VIEW}/${movie.id}")
+            navController.navigate("${Destinations.DETAILED_MOVIE_VIEW}/${movie.id}"); historyCount++; history["movie"+ historyCount] = movie.id.toString()
         }
     ) {
         Column(
@@ -680,7 +708,7 @@ fun TVCard(tv: TV, navController: NavController, modifier: Modifier = Modifier) 
         colors = CardDefaults.cardColors(containerColor = Color.Black),
         shape = RoundedCornerShape(10.dp),
         onClick = {
-            navController.navigate("${Destinations.DETAILED_TV_VIEW}/${tv.id}")
+            navController.navigate("${Destinations.DETAILED_TV_VIEW}/${tv.id}"); historyCount++; history["tv"+ historyCount] = tv.id.toString()
         }
     ) {
         Column(
@@ -730,7 +758,7 @@ fun BookCard(book: Book, navController: NavController, modifier: Modifier = Modi
         colors = CardDefaults.cardColors(containerColor = Color.Black),
         shape = RoundedCornerShape(10.dp),
         onClick = {
-            navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${book.id}")
+            navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${book.id}"); historyCount++; history["book"+ historyCount] = book.id.toString()
         }
     ) {
         Column(
@@ -791,7 +819,7 @@ fun VerticalBookCard(book: Book, navController: NavController, modifier: Modifie
         colors = CardDefaults.cardColors(containerColor = Color.Black),
         shape = RoundedCornerShape(10.dp),
         onClick = {
-            navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${book.id}")
+            navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${book.id}"); historyCount++; history["book"+ historyCount] = book.id.toString()
         }
     ) {
         Column(
