@@ -9,8 +9,9 @@ import java.time.LocalDateTime
 
 open class HistoryEntity : RealmObject {
     @PrimaryKey var _id: ObjectId = ObjectId()
-    var contentType: String = ""
     var contentId: String = ""
+    var contentTitle: String = ""
+    var contentInfo: String = ""
     @Ignore
     @SuppressLint("NewApi")
     var timestamp: LocalDateTime = LocalDateTime.now()

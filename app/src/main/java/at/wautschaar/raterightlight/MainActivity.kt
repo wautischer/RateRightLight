@@ -56,7 +56,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -358,13 +357,7 @@ fun Home(
             color = Color.Black
         )
 
-        HistoryView(
-            viewmodel = viewmodel,
-            modifier = Modifier.fillMaxWidth(),
-            bviewmodel = bookViewModel,
-            mviewmodel = movieViewModel,
-            tviewmodel = tvViewModel
-        )
+        HistoryView(viewModel = viewmodel)
     }
 }
 
@@ -1507,27 +1500,19 @@ private fun launchAmazon(
 
 @Composable
 fun HistoryView(
-    viewmodel: RealmViewmodel,
-    modifier: Modifier = Modifier,
-    bviewmodel: BookViewModel,
-    mviewmodel: MovieViewModel,
-    tviewmodel: TvViewModel
-
+    viewModel: RealmViewmodel,
+    modifier: Modifier = Modifier
 ) {
-    val histories by viewmodel.histories.collectAsState()
+    val histories by viewModel.histories.collectAsState()
+
     LazyColumn(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp)
     ) {
         items(histories) { history ->
             HistoryCard(
-                history = history,
-                modifier = Modifier,
-                realmViewmodel = viewmodel,
-                bookViewmodel = bviewmodel,
-                movieViewModel = mviewmodel,
-                tvViewmodel = tviewmodel
+                history = history
             )
         }
     }
@@ -1537,81 +1522,42 @@ fun HistoryView(
 fun HistoryCard(
     history: HistoryEntity,
     modifier: Modifier = Modifier,
-    realmViewmodel: RealmViewmodel,
-    bookViewmodel: BookViewModel,
-    movieViewModel: MovieViewModel,
-    tvViewmodel: TvViewModel
+    onDeleteClicked: () -> Unit = {}
 ) {
-    val book by bookViewmodel.book.collectAsState()
-    val movie by movieViewModel.movie.collectAsState()
-    val tv by tvViewmodel.tv.collectAsState()
-
-    val historyType = history.contentType
-    val historyId = history.contentId
-
-    var contentName = ""
-    var contentInfo = ""
-
-    when (historyType) {
-        "book" -> {
-            LaunchedEffect(historyId) {
-                bookViewmodel.getBookByID(historyId)
-            }
-            contentName = book?.title.orEmpty()
-            contentInfo = book?.authors?.getOrNull(0).orEmpty()
-        }
-        "movie" -> {
-            LaunchedEffect(historyId) {
-                movieViewModel.getMovieByID(historyId)
-            }
-            contentName = movie?.title.orEmpty()
-            contentInfo = movie?.release_date.orEmpty()
-        }
-        "tv" -> {
-            LaunchedEffect(historyId) {
-                tvViewmodel.getTvByID(historyId)
-            }
-            contentName = tv?.original_name.orEmpty()
-            contentInfo = tv?.first_air_date.orEmpty()
-        }
-    }
-
-    Row(modifier = modifier.padding(5.dp)) {
-        Card(
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.Black)
+    ) {
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color.Black)
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Text(
+                text = if (history.contentTitle.length > 10) history.contentTitle.take(6) + "..." else history.contentTitle,
+                color = Color.White,
+                modifier = Modifier.padding(start = 16.dp)
+            )
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = contentName,
-                    color = Color.White,
-                    modifier = Modifier.padding(start = 16.dp)
+                    text = history.contentInfo,
+                    color = Color.LightGray,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 )
-                Box(
-                    modifier = Modifier.weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = contentInfo,
-                        color = Color.LightGray,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                }
-                IconButton(
-                    onClick = { realmViewmodel.deleteHistory(history) },
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete History Item",
-                        tint = Color.White
-                    )
-                }
+            }
+            IconButton(
+                onClick = onDeleteClicked,
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete History Item",
+                    tint = Color.White
+                )
             }
         }
     }

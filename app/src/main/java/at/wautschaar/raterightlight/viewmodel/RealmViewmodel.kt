@@ -1,7 +1,10 @@
 package at.wautschaar.raterightlight.viewmodel
 
+import android.annotation.SuppressLint
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import at.wautschaar.raterightlight.network.APIBook
+import at.wautschaar.raterightlight.network.APIMDB
 import at.wautschaar.raterightlight.realm.HistoryEntity
 import at.wautschaar.raterightlight.realm.MyApp
 import io.realm.kotlin.UpdatePolicy
@@ -10,6 +13,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 
 class RealmViewmodel : ViewModel() {
 
@@ -28,17 +32,48 @@ class RealmViewmodel : ViewModel() {
         )
 
     init {
-        //testRealm()
+
     }
 
+    @SuppressLint("NewApi")
     fun insertHistory(cType: String, cID: String) {
         viewModelScope.launch {
-            realm.write {
-                val history = HistoryEntity().apply {
-                    contentType = cType
-                    contentId = cID
+            try {
+                val cTitle: String
+                val cInfo: String
+
+                when (cType) {
+                    "book" -> {
+                        val bookInfo = APIBook.retrofitService.getBookByID(cID).volumeInfo
+                        cTitle = bookInfo.title
+                        cInfo = bookInfo.authors?.getOrNull(0) ?: ""
+                    }
+                    "movie" -> {
+                        val movie = APIMDB.retrofitService.getMovieByID(cID)
+                        cTitle = movie.title.toString()
+                        cInfo = movie.release_date.toString()
+                    }
+                    "tv" -> {
+                        val tv = APIMDB.retrofitService.getTvByID(cID)
+                        cTitle = tv.original_name.toString()
+                        cInfo = tv.first_air_date.toString()
+                    }
+                    else -> {
+                        throw IllegalArgumentException("Unsupported content type: $cType")
+                    }
                 }
-                copyToRealm(history, updatePolicy = UpdatePolicy.ALL)
+
+                realm.write {
+                    val history = HistoryEntity().apply {
+                        contentId = cID
+                        contentTitle = cTitle
+                        contentInfo = cInfo
+                        timestamp = LocalDateTime.now()
+                    }
+                    copyToRealm(history, updatePolicy = UpdatePolicy.ALL)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
@@ -53,6 +88,7 @@ class RealmViewmodel : ViewModel() {
         }
     }
 
+    /* //region Test
     private fun testRealm() {
         viewModelScope.launch {
             realm.write {
@@ -69,4 +105,5 @@ class RealmViewmodel : ViewModel() {
             }
         }
     }
+     */ //endregion
 }
