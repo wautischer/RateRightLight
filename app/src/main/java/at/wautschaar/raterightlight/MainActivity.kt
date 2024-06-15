@@ -14,6 +14,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +32,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -42,6 +44,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Notifications
@@ -85,6 +88,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
@@ -98,19 +102,22 @@ import at.wautschaar.raterightlight.model.Movie
 import at.wautschaar.raterightlight.model.TV
 import at.wautschaar.raterightlight.network.APIBook
 import at.wautschaar.raterightlight.network.APIMDB
+import at.wautschaar.raterightlight.realm.HistoryEntity
 import at.wautschaar.raterightlight.ui.theme.RateRightLightTheme
 import at.wautschaar.raterightlight.viewmodel.BookViewModel
 import at.wautschaar.raterightlight.viewmodel.MovieViewModel
+import at.wautschaar.raterightlight.viewmodel.RealmViewmodel
 import at.wautschaar.raterightlight.viewmodel.SearchFilter
 import at.wautschaar.raterightlight.viewmodel.SearchViewModel
 import at.wautschaar.raterightlight.viewmodel.TvViewModel
 import coil.compose.rememberAsyncImagePainter
 
-
 private const val IMAGE_URL = "https://image.tmdb.org/t/p/original/"
 private var trendingMovieList = emptyList<Movie>()
 private var trendingTVList = emptyList<TV>()
 private var trendingBookList = emptyList<Book>()
+private var history = mutableMapOf<String, String>()
+private var historyCount = 0
 
 object Destinations {
     const val MY_LIST_ROUTE = "MyList"
@@ -130,6 +137,9 @@ data class BottomNavigationItem(
 )
 
 class MainActivity : ComponentActivity() {
+
+    private val RealmviewModel: RealmViewmodel by viewModels()
+
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -256,10 +266,28 @@ class MainActivity : ComponentActivity() {
                             startDestination = Destinations.HOME_ROUTE,
                             modifier = Modifier.padding(innerPadding)
                         ) {
-                            composable(Destinations.MY_LIST_ROUTE) { MyList(navController) }
-                            composable(Destinations.HOME_ROUTE) { Home(navController) }
+                            composable(Destinations.MY_LIST_ROUTE) {
+                                MyList(
+                                    navController,
+                                    viewmodel = RealmviewModel
+                                )
+                            }
+                            composable(Destinations.HOME_ROUTE) {
+                                Home(
+                                    navController,
+                                    viewmodel = RealmViewmodel(),
+                                    bookViewModel = BookViewModel(),
+                                    movieViewModel = MovieViewModel(),
+                                    tvViewModel = TvViewModel()
+                                )
+                            }
                             //composable(Destinations.SETTINGS_ROUTE) { Settings() }
-                            composable(Destinations.TRENDING_ROUTE) { TrendingPage(navController) }
+                            composable(Destinations.TRENDING_ROUTE) {
+                                TrendingPage(
+                                    navController,
+                                    viewmodel = RealmViewmodel()
+                                )
+                            }
                             composable("${Destinations.DETAILED_BOOK_VIEW}/{bookId}") { backStackEntry ->
                                 val bookId = backStackEntry.arguments?.getString("bookId") ?: ""
                                 DetailedBookView(bookId, navController)
@@ -285,20 +313,63 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Home(navController: NavController) {
+fun Home(
+    navController: NavController,
+    viewmodel: RealmViewmodel,
+    bookViewModel: BookViewModel,
+    movieViewModel: MovieViewModel,
+    tvViewModel: TvViewModel
+) {
     Column(modifier = Modifier.fillMaxSize()) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Searchbar(navController)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            //MovieList(movies = trendingMovieList, navController = navController)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp)
+        ) {
+            Searchbar(navController = navController)
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Recommended for YOU",
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth(),
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
+
+        VerticalBookList(
+            books = trendingBookList,
+            navController = navController,
+            modifier = Modifier.fillMaxWidth(),
+            viewmodel = viewmodel
+        )
+
+        Text(
+            text = "History",
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 16.dp)
+                .fillMaxWidth(),
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
+
+        HistoryView(
+            viewmodel = viewmodel,
+            modifier = Modifier.fillMaxWidth(),
+            bviewmodel = bookViewModel,
+            mviewmodel = movieViewModel,
+            tviewmodel = tvViewModel
+        )
     }
 }
 
 @Composable
-fun MyList(navController: NavController) {
+fun MyList(navController: NavController, viewmodel: RealmViewmodel) {
     Log.d("MyList", "MyList composable loaded")
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -401,7 +472,7 @@ fun Searchbar(navController: NavController) {
                 navController.navigate("searchResult/${searchText}")
             })
         )
-
+        /*
         if (isSearching) {
             Box(modifier = Modifier.fillMaxSize()) {
                 CircularProgressIndicator(
@@ -452,6 +523,7 @@ fun Searchbar(navController: NavController) {
                 }
             }
         }
+         */
     }
 }
 
@@ -684,7 +756,7 @@ fun TVItem(tvShow: TV, navController: NavController) {
 
 //region TrendingPage
 @Composable
-fun TrendingPage(navController: NavController) {
+fun TrendingPage(navController: NavController, viewmodel: RealmViewmodel) {
     val context = LocalContext.current
 
     var selectedButton by rememberSaveable { mutableStateOf(loadSelectedButton(context)) }
@@ -695,7 +767,8 @@ fun TrendingPage(navController: NavController) {
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp),
             contentAlignment = Alignment.TopCenter
         ) {
             Row(
@@ -752,15 +825,27 @@ fun TrendingPage(navController: NavController) {
         Box(modifier = Modifier.fillMaxSize()) {
             when (selectedButton) {
                 "Bücher" -> {
-                    BookList(books = trendingBookList, navController = navController)
+                    BookList(
+                        books = trendingBookList,
+                        navController = navController,
+                        viewmodel = viewmodel
+                    )
                 }
 
                 "Filme" -> {
-                    MovieList(movies = trendingMovieList, navController = navController)
+                    MovieList(
+                        movies = trendingMovieList,
+                        navController = navController,
+                        viewmodel = viewmodel
+                    )
                 }
 
                 "Serien" -> {
-                    TVList(tvs = trendingTVList, navController = navController)
+                    TVList(
+                        tvs = trendingTVList,
+                        navController = navController,
+                        viewmodel = viewmodel
+                    )
                 }
             }
         }
@@ -787,7 +872,12 @@ private fun saveSelectedButton(context: Context, selectedButton: String) {
 }
 
 @Composable
-fun MovieList(movies: List<Movie>, modifier: Modifier = Modifier, navController: NavController) {
+fun MovieList(
+    movies: List<Movie>,
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    viewmodel: RealmViewmodel
+) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = modifier.padding(8.dp),
@@ -799,20 +889,27 @@ fun MovieList(movies: List<Movie>, modifier: Modifier = Modifier, navController:
             MovieCard(
                 movie = movie,
                 navController = navController,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                viewmodel = viewmodel
             )
         }
     }
 }
 
 @Composable
-fun MovieCard(movie: Movie, navController: NavController, modifier: Modifier = Modifier) {
+fun MovieCard(
+    movie: Movie,
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    viewmodel: RealmViewmodel
+) {
     Card(
         modifier = modifier.padding(4.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Black),
         shape = RoundedCornerShape(10.dp),
         onClick = {
-            navController.navigate("${Destinations.DETAILED_MOVIE_VIEW}/${movie.id}")
+            navController.navigate("${Destinations.DETAILED_MOVIE_VIEW}/${movie.id}");
+            viewmodel.insertHistory("movie", movie.id.toString())
         }
     ) {
         Column(
@@ -841,7 +938,12 @@ fun MovieCard(movie: Movie, navController: NavController, modifier: Modifier = M
 }
 
 @Composable
-fun TVList(tvs: List<TV>, modifier: Modifier = Modifier, navController: NavController) {
+fun TVList(
+    tvs: List<TV>,
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    viewmodel: RealmViewmodel
+) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = modifier.padding(8.dp),
@@ -850,19 +952,30 @@ fun TVList(tvs: List<TV>, modifier: Modifier = Modifier, navController: NavContr
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(tvs) { tv ->
-            TVCard(tv = tv, navController = navController, modifier = Modifier.fillMaxWidth())
+            TVCard(
+                tv = tv,
+                navController = navController,
+                modifier = Modifier.fillMaxWidth(),
+                viewmodel = viewmodel
+            )
         }
     }
 }
 
 @Composable
-fun TVCard(tv: TV, navController: NavController, modifier: Modifier = Modifier) {
+fun TVCard(
+    tv: TV,
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    viewmodel: RealmViewmodel
+) {
     Card(
         modifier = modifier.padding(4.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Black),
         shape = RoundedCornerShape(10.dp),
         onClick = {
-            navController.navigate("${Destinations.DETAILED_TV_VIEW}/${tv.id}")
+            navController.navigate("${Destinations.DETAILED_TV_VIEW}/${tv.id}");
+            viewmodel.insertHistory("tv", tv.id.toString())
         }
     ) {
         Column(
@@ -891,7 +1004,12 @@ fun TVCard(tv: TV, navController: NavController, modifier: Modifier = Modifier) 
 }
 
 @Composable
-fun BookList(books: List<Book>, modifier: Modifier = Modifier, navController: NavController) {
+fun BookList(
+    books: List<Book>,
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    viewmodel: RealmViewmodel
+) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = modifier.padding(8.dp),
@@ -900,19 +1018,30 @@ fun BookList(books: List<Book>, modifier: Modifier = Modifier, navController: Na
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(books) { book ->
-            BookCard(book = book, navController = navController, modifier = Modifier.fillMaxWidth())
+            BookCard(
+                book = book,
+                navController = navController,
+                modifier = Modifier.fillMaxWidth(),
+                viewmodel = viewmodel
+            )
         }
     }
 }
 
 @Composable
-fun BookCard(book: Book, navController: NavController, modifier: Modifier = Modifier) {
+fun BookCard(
+    book: Book,
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    viewmodel: RealmViewmodel
+) {
     Card(
         modifier = modifier.padding(4.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Black),
         shape = RoundedCornerShape(10.dp),
         onClick = {
-            navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${book.id}")
+            navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${book.id}");
+            viewmodel.insertHistory("book", book.id.toString())
         }
     ) {
         Column(
@@ -943,6 +1072,75 @@ fun BookCard(book: Book, navController: NavController, modifier: Modifier = Modi
 // endregion
 
 //region DetailPage
+@Composable
+fun VerticalBookList(
+    books: List<Book>,
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    viewmodel: RealmViewmodel
+) {
+    println("VerticalBookList geladen!")
+    LazyRow(
+        modifier = modifier.padding(8.dp),
+        contentPadding = PaddingValues(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(books) { book ->
+            VerticalBookCard(
+                book = book,
+                navController = navController,
+                modifier = Modifier.fillMaxWidth(),
+                viewmodel = viewmodel
+            )
+        }
+    }
+}
+
+@Composable
+fun VerticalBookCard(
+    book: Book,
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    viewmodel: RealmViewmodel
+) {
+    Card(
+        modifier = modifier
+            .padding(4.dp)
+            .width(300.dp)
+            .height(450.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Black),
+        shape = RoundedCornerShape(10.dp),
+        onClick = {
+            navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${book.id}");
+            viewmodel.insertHistory("book", book.id.toString())
+        }
+    ) {
+        Column(
+            modifier = Modifier.padding(8.dp)
+        ) {
+            val imageURL =
+                "https://books.google.com/books/content?id=" + book.id + "&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
+            val painter = rememberAsyncImagePainter(model = imageURL)
+            Image(
+                painter = painter,
+                contentDescription = book.title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(350.dp)
+                    .clip(RoundedCornerShape(10.dp)),
+                contentScale = ContentScale.FillBounds
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = if (book.title.length > 25) book.title.take(15) + "..." else book.title,
+                modifier = Modifier.padding(4.dp),
+                Color.White
+            )
+            Text(text = " " + book.authors?.get(0).toString(), color = Color.LightGray)
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -1307,6 +1505,119 @@ private fun launchAmazon(
 }
 // endregion
 
+@Composable
+fun HistoryView(
+    viewmodel: RealmViewmodel,
+    modifier: Modifier = Modifier,
+    bviewmodel: BookViewModel,
+    mviewmodel: MovieViewModel,
+    tviewmodel: TvViewModel
+
+) {
+    val histories by viewmodel.histories.collectAsState()
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+    ) {
+        items(histories) { history ->
+            HistoryCard(
+                history = history,
+                modifier = Modifier,
+                realmViewmodel = viewmodel,
+                bookViewmodel = bviewmodel,
+                movieViewModel = mviewmodel,
+                tvViewmodel = tviewmodel
+            )
+        }
+    }
+}
+
+@Composable
+fun HistoryCard(
+    history: HistoryEntity,
+    modifier: Modifier = Modifier,
+    realmViewmodel: RealmViewmodel,
+    bookViewmodel: BookViewModel,
+    movieViewModel: MovieViewModel,
+    tvViewmodel: TvViewModel
+) {
+    val book by bookViewmodel.book.collectAsState()
+    val movie by movieViewModel.movie.collectAsState()
+    val tv by tvViewmodel.tv.collectAsState()
+
+    val historyType = history.contentType
+    val historyId = history.contentId
+
+    var contentName = ""
+    var contentInfo = ""
+
+    when (historyType) {
+        "book" -> {
+            LaunchedEffect(historyId) {
+                bookViewmodel.getBookByID(historyId)
+            }
+            contentName = book?.title.orEmpty()
+            contentInfo = book?.authors?.getOrNull(0).orEmpty()
+        }
+        "movie" -> {
+            LaunchedEffect(historyId) {
+                movieViewModel.getMovieByID(historyId)
+            }
+            contentName = movie?.title.orEmpty()
+            contentInfo = movie?.release_date.orEmpty()
+        }
+        "tv" -> {
+            LaunchedEffect(historyId) {
+                tvViewmodel.getTvByID(historyId)
+            }
+            contentName = tv?.original_name.orEmpty()
+            contentInfo = tv?.first_air_date.orEmpty()
+        }
+    }
+
+    Row(modifier = modifier.padding(5.dp)) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color.Black)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = contentName,
+                    color = Color.White,
+                    modifier = Modifier.padding(start = 16.dp)
+                )
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = contentInfo,
+                        color = Color.LightGray,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+                IconButton(
+                    onClick = { realmViewmodel.deleteHistory(history) },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete History Item",
+                        tint = Color.White
+                    )
+                }
+            }
+        }
+    }
+}
+
+/*
 //region Movie/TV Test composable and Movie/TV/Book Card/List
 @Composable
 fun Test() {
@@ -1392,4 +1703,22 @@ fun Test() {
     //MovieList(movies = trendingList)
     //TVList(tvs = trendingTVList)
 }
+
+@Composable
+fun TestRealm(viewmodel: RealmViewmodel) {
+    val histories by viewmodel.histories.collectAsState()
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        items(histories) { history ->
+            HistoryCard(
+                history = history,
+                modifier = Modifier.fillMaxWidth(),
+                realmViewmodel = viewmodel
+            )
+        }
+    }
+}
 //endregion
+ */
