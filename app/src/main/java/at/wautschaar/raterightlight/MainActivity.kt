@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -100,9 +101,11 @@ import at.wautschaar.raterightlight.network.APIMDB
 import at.wautschaar.raterightlight.ui.theme.RateRightLightTheme
 import at.wautschaar.raterightlight.viewmodel.BookViewModel
 import at.wautschaar.raterightlight.viewmodel.MovieViewModel
+import at.wautschaar.raterightlight.viewmodel.SearchFilter
 import at.wautschaar.raterightlight.viewmodel.SearchViewModel
 import at.wautschaar.raterightlight.viewmodel.TvViewModel
 import coil.compose.rememberAsyncImagePainter
+
 
 private const val IMAGE_URL = "https://image.tmdb.org/t/p/original/"
 private var trendingMovieList = emptyList<Movie>()
@@ -317,94 +320,134 @@ fun Searchbar(navController: NavController) {
     val movieData by viewModel.movieData.collectAsState()
     val tvData by viewModel.tvData.collectAsState()
     val isSearching by viewModel.isSearching.collectAsState()
+    val searchFilter by viewModel.searchFilter.collectAsState()
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .clip(RoundedCornerShape(25.dp))
-            .background(Color.White)
+            .padding(16.dp)
     ) {
-        Column {
-            TextField(
-                value = searchText,
-                onValueChange = { newSearchText ->
-                    viewModel.onSearchTextChange(newSearchText)
-                    viewModel.fetchBooks(newSearchText)
-                    viewModel.fetchMovies(newSearchText)
-                    viewModel.fetchTVShows(newSearchText)
-                },
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            FilterButton(
+                text = "Bücher",
+                isSelected = searchFilter == SearchFilter.BOOKS,
+                onClick = { viewModel.onSearchFilterChange(SearchFilter.BOOKS) }
+            )
+
+            FilterButton(
+                text = "Filme",
+                isSelected = searchFilter == SearchFilter.MOVIES,
+                onClick = { viewModel.onSearchFilterChange(SearchFilter.MOVIES) }
+            )
+
+            FilterButton(
+                text = "Serien",
+                isSelected = searchFilter == SearchFilter.TV_SHOWS,
+                onClick = { viewModel.onSearchFilterChange(SearchFilter.TV_SHOWS) }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        TextField(
+            value = searchText,
+            onValueChange = { newSearchText ->
+                viewModel.onSearchTextChange(newSearchText)
+                when (searchFilter) {
+                    SearchFilter.BOOKS -> viewModel.fetchBooks(newSearchText)
+                    SearchFilter.MOVIES -> viewModel.fetchMovies(newSearchText)
+                    SearchFilter.TV_SHOWS -> viewModel.fetchTVShows(newSearchText)
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(25.dp)),
+            placeholder = {
+                Text(
+                    text = "Search",
+                    style = TextStyle(fontStyle = FontStyle.Italic)
+                )
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Search"
+                )
+            },
+            trailingIcon = {
+                if (searchText.isNotEmpty()) {
+                    IconButton(onClick = { viewModel.onSearchTextChange("") }) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = "Clear"
+                        )
+                    }
+                }
+            },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = {
+                when (viewModel.searchFilter.value) {
+                    SearchFilter.BOOKS -> viewModel.fetchBooks(searchText)
+                    SearchFilter.MOVIES -> viewModel.fetchMovies(searchText)
+                    SearchFilter.TV_SHOWS -> viewModel.fetchTVShows(searchText)
+                }
+                navController.navigate("searchResult/${searchText}")
+            })
+        )
+
+        if (isSearching) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+        } else {
+            LazyColumn(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(25.dp)),
-                placeholder = {
-                    Text(
-                        text = "Search",
-                        color = Color.Gray,
-                        style = TextStyle(fontStyle = FontStyle.Italic)
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search",
-                        tint = Color.Gray
-                    )
-                },
-                trailingIcon = {
-                    if (searchText.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.onSearchTextChange("") }) {
-                            Icon(
-                                imageVector = Icons.Default.Clear,
-                                contentDescription = "Clear",
-                                tint = Color.Gray
+                    .fillMaxSize()
+            ) {
+                when (searchFilter) {
+                    SearchFilter.BOOKS -> {
+                        items(bookData) { item ->
+                            Text(
+                                text = "${item.title}",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 10.dp)
+                                    .padding(16.dp)
                             )
                         }
                     }
-                },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = {
-                    viewModel.fetchBooks(searchText)
-                    navController.navigate("searchResult/${searchText}")
-                })
-            )
 
-            if (isSearching) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .weight(1f)
-                ) {
-                    items(bookData) { item ->
-                        Text(
-                            text = "${item.title}",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 10.dp)
-                        )
+                    SearchFilter.MOVIES -> {
+                        items(movieData) { item ->
+                            Text(
+                                text = "${item.title}",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 10.dp)
+                                    .padding(16.dp)
+                            )
+                        }
                     }
-                    items(movieData) { item ->
-                        Text(
-                            text = "${item.title}",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 10.dp)
-                        )
-                    }
-                    items(tvData) { item ->
-                        Text(
-                            text = "${item.original_name}",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 10.dp)
-                        )
+
+                    SearchFilter.TV_SHOWS -> {
+                        items(tvData) { item ->
+                            Text(
+                                text = "${item.original_name}",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 10.dp)
+                                    .padding(16.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -412,19 +455,42 @@ fun Searchbar(navController: NavController) {
     }
 }
 
+@Composable
+fun FilterButton(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isSelected) Color.Black else Color.LightGray
+        ),
+        modifier = Modifier.widthIn(120.dp)
+    ) {
+        Text(
+            text = text,
+            color = if (isSelected) Color.White else Color.Black
+        )
+    }
+}
+
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "StateFlowValueCalledInComposition")
 @OptIn(ExperimentalMaterial3Api::class)
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SearchResultPage(
     query: String,
     navController: NavController,
     viewModel: SearchViewModel = viewModel()
 ) {
-    Log.d("SearchResult", "SearchResult composable loaded")
-    LaunchedEffect(query) {
-        viewModel.fetchBooks(query)
-        viewModel.fetchMovies(query)
-        viewModel.fetchTVShows(query)
+    Log.d("SearchResult", "SearchResult composable loaded with query: $query")
+
+    LaunchedEffect(viewModel.searchFilter.value) {
+        when (viewModel.searchFilter.value) {
+            SearchFilter.BOOKS -> viewModel.fetchBooks(query)
+            SearchFilter.MOVIES -> viewModel.fetchMovies(query)
+            SearchFilter.TV_SHOWS -> viewModel.fetchTVShows(query)
+        }
     }
 
     val bookSearchResults by viewModel.bookSearchResults.collectAsState()
@@ -434,7 +500,7 @@ fun SearchResultPage(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("$query") },
+                title = { Text("Ergebnisse für '$query'") },
                 navigationIcon = {
                     Box(
                         modifier = Modifier
@@ -443,8 +509,7 @@ fun SearchResultPage(
                             .background(Color.Black)
                     ) {
                         IconButton(
-                            onClick = { navController.popBackStack() },
-                            modifier = Modifier.size(36.dp)
+                            onClick = { navController.popBackStack() }
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
@@ -461,14 +526,28 @@ fun SearchResultPage(
                 item {
                     Spacer(modifier = Modifier.height(60.dp))
                 }
-                items(bookSearchResults) { book ->
-                    BookItem(book = book, navController = navController)
-                }
-                items(movieSearchResults) { movie ->
-                    MovieItem(movie = movie, navController = navController)
-                }
-                items(tvSearchResults) { tvShow ->
-                    TVItem(tvShow = tvShow, navController = navController)
+                Log.d("Filter", "${viewModel.searchFilter.value}")
+                when (viewModel.searchFilter.value) {
+                    SearchFilter.BOOKS -> {
+                        Log.d("SearchResult", "Displaying book results")
+                        items(bookSearchResults) { book ->
+                            BookItem(book = book, navController = navController)
+                        }
+                    }
+
+                    SearchFilter.MOVIES -> {
+                        Log.d("SearchResult", "Displaying movie results")
+                        items(movieSearchResults) { movie ->
+                            MovieItem(movie = movie, navController = navController)
+                        }
+                    }
+
+                    SearchFilter.TV_SHOWS -> {
+                        Log.d("SearchResult", "Displaying TV show results")
+                        items(tvSearchResults) { tvShow ->
+                            TVItem(tvShow = tvShow, navController = navController)
+                        }
+                    }
                 }
             }
         }
@@ -479,7 +558,9 @@ fun SearchResultPage(
 fun BookItem(book: Book, navController: NavController) {
     book.imageUrl?.let { Log.d("imageURL", it) }
     Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
         shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         onClick = {
@@ -544,7 +625,10 @@ fun MovieItem(movie: Movie, navController: NavController) {
             Column(
                 modifier = Modifier.align(Alignment.CenterVertically)
             ) {
-                Text(text = movie.title ?: "Unknown Title", style = MaterialTheme.typography.headlineMedium)
+                Text(
+                    text = movie.title ?: "Unknown Title",
+                    style = MaterialTheme.typography.headlineMedium
+                )
                 Text(
                     text = movie.release_date ?: "Unknown Date",
                     style = MaterialTheme.typography.bodyMedium
@@ -584,7 +668,10 @@ fun TVItem(tvShow: TV, navController: NavController) {
             Column(
                 modifier = Modifier.align(Alignment.CenterVertically)
             ) {
-                Text(text = tvShow.original_name ?: "Unknown Name", style = MaterialTheme.typography.headlineMedium)
+                Text(
+                    text = tvShow.original_name ?: "Unknown Name",
+                    style = MaterialTheme.typography.headlineMedium
+                )
                 Text(
                     text = tvShow.first_air_date ?: "Unknown Date",
                     style = MaterialTheme.typography.bodyMedium
