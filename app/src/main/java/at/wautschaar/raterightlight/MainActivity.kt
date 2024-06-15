@@ -98,12 +98,17 @@ import at.wautschaar.raterightlight.model.Movie
 import at.wautschaar.raterightlight.model.TV
 import at.wautschaar.raterightlight.network.APIBook
 import at.wautschaar.raterightlight.network.APIMDB
+import at.wautschaar.raterightlight.realm.HistoryEntity
 import at.wautschaar.raterightlight.ui.theme.RateRightLightTheme
 import at.wautschaar.raterightlight.viewmodel.BookViewModel
 import at.wautschaar.raterightlight.viewmodel.MovieViewModel
 import at.wautschaar.raterightlight.viewmodel.SearchViewModel
 import at.wautschaar.raterightlight.viewmodel.TvViewModel
 import coil.compose.rememberAsyncImagePainter
+import io.realm.kotlin.Realm
+import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.ext.query
+import io.realm.kotlin.query.RealmResults
 
 private const val IMAGE_URL = "https://image.tmdb.org/t/p/original/"
 private var trendingMovieList = emptyList<Movie>()
@@ -111,6 +116,15 @@ private var trendingTVList = emptyList<TV>()
 private var trendingBookList = emptyList<Book>()
 private var history = mutableMapOf<String, String>()
 private var historyCount = 0
+
+val config = RealmConfiguration.Builder(setOf(HistoryEntity::class))
+    .name("myrealm.realm")
+    .schemaVersion(1)
+    .deleteRealmIfMigrationNeeded()
+    .build()
+val realm: Realm = Realm.open(config)
+
+val historyRealm: RealmResults<HistoryEntity> = realm.query<HistoryEntity>().find()
 
 object Destinations {
     const val MY_LIST_ROUTE = "MyList"
