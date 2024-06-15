@@ -53,7 +53,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -285,23 +284,24 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun Home(navController: NavController) {
     Column(modifier = Modifier.fillMaxSize()) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                //Searchbar(navController)
-                Text(text = "Searchbar")
-            }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp)
+        ) {
+            Searchbar(navController = navController)
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-        Box(modifier = Modifier.fillMaxSize()) {
-            VerticalBookList(books = trendingBookList, navController = navController)
-        }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(text = "Recommended for YOU")
+        VerticalBookList(
+            books = trendingBookList,
+            navController = navController,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
-
 
 @Composable
 fun MyList(navController: NavController) {
@@ -373,7 +373,7 @@ fun Searchbar(navController: NavController) {
                     navController.navigate("searchResult/${searchText}")
                 })
             )
-
+            /* TrendingList auf der Homepage ladet sonst nicht. Grund: Viewmodel
             if (isSearching) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     CircularProgressIndicator(
@@ -396,6 +396,7 @@ fun Searchbar(navController: NavController) {
                     }
                 }
             }
+             */
         }
     }
 }
@@ -511,7 +512,8 @@ fun TrendingPage(navController: NavController) {
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp),
             contentAlignment = Alignment.TopCenter
         ) {
             Row(
