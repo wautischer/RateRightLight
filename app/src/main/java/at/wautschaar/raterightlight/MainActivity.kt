@@ -17,6 +17,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -126,6 +127,7 @@ object Destinations {
     const val DETAILED_BOOK_VIEW = "DetailedBookView"
     const val DETAILED_TV_VIEW = "DetailedTvView"
     const val DETAILED_MOVIE_VIEW = "DetailedMovieView"
+    const val HISTORY_ROUTE = "History"
 }
 
 data class BottomNavigationItem(
@@ -280,6 +282,12 @@ class MainActivity : ComponentActivity() {
                                     tvViewModel = TvViewModel()
                                 )
                             }
+                            composable(Destinations.HISTORY_ROUTE) {
+                                History(
+                                    navController = navController,
+                                    viewmodel = RealmViewmodel()
+                                )
+                            }
                             //composable(Destinations.SETTINGS_ROUTE) { Settings() }
                             composable(Destinations.TRENDING_ROUTE) {
                                 TrendingPage(
@@ -301,7 +309,11 @@ class MainActivity : ComponentActivity() {
                             }
                             composable("searchResult/{query}") { backStackEntry ->
                                 val query = backStackEntry.arguments?.getString("query") ?: ""
-                                SearchResultPage(query = query, navController = navController)
+                                SearchResultPage(
+                                    query = query,
+                                    navController = navController,
+                                    viewmodel = RealmViewmodel()
+                                )
                             }
                         }
                     }
@@ -357,7 +369,11 @@ fun Home(
             color = Color.Black
         )
 
-        HistoryView(viewModel = viewmodel)
+        HistoryView(
+            viewModel = viewmodel,
+            modifier = Modifier.fillMaxSize(),
+            navController = navController
+        )
     }
 }
 
@@ -391,8 +407,8 @@ fun Searchbar(navController: NavController) {
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .clip(RoundedCornerShape(25.dp))
-            .padding(16.dp)
     ) {
+        /*
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly,
@@ -416,6 +432,7 @@ fun Searchbar(navController: NavController) {
                 onClick = { viewModel.onSearchFilterChange(SearchFilter.TV_SHOWS) }
             )
         }
+         */
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -546,7 +563,8 @@ fun FilterButton(
 fun SearchResultPage(
     query: String,
     navController: NavController,
-    viewModel: SearchViewModel = viewModel()
+    viewModel: SearchViewModel = viewModel(),
+    viewmodel: RealmViewmodel
 ) {
     Log.d("SearchResult", "SearchResult composable loaded with query: $query")
 
@@ -574,7 +592,7 @@ fun SearchResultPage(
                             .background(Color.Black)
                     ) {
                         IconButton(
-                            onClick = { navController.popBackStack() }
+                            onClick = { navController.navigateUp() }
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
@@ -596,21 +614,33 @@ fun SearchResultPage(
                     SearchFilter.BOOKS -> {
                         Log.d("SearchResult", "Displaying book results")
                         items(bookSearchResults) { book ->
-                            BookItem(book = book, navController = navController)
+                            BookItem(
+                                book = book,
+                                navController = navController,
+                                viewmodel = viewmodel
+                            )
                         }
                     }
 
                     SearchFilter.MOVIES -> {
                         Log.d("SearchResult", "Displaying movie results")
                         items(movieSearchResults) { movie ->
-                            MovieItem(movie = movie, navController = navController)
+                            MovieItem(
+                                movie = movie,
+                                navController = navController,
+                                viewmodel = viewmodel
+                            )
                         }
                     }
 
                     SearchFilter.TV_SHOWS -> {
                         Log.d("SearchResult", "Displaying TV show results")
                         items(tvSearchResults) { tvShow ->
-                            TVItem(tvShow = tvShow, navController = navController)
+                            TVItem(
+                                tvShow = tvShow,
+                                navController = navController,
+                                viewmodel = viewmodel
+                            )
                         }
                     }
                 }
@@ -620,7 +650,7 @@ fun SearchResultPage(
 }
 
 @Composable
-fun BookItem(book: Book, navController: NavController) {
+fun BookItem(book: Book, navController: NavController, viewmodel: RealmViewmodel) {
     book.imageUrl?.let { Log.d("imageURL", it) }
     Card(
         modifier = Modifier
@@ -629,7 +659,8 @@ fun BookItem(book: Book, navController: NavController) {
         shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         onClick = {
-            navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${book.id}")
+            navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${book.id}");
+            viewmodel.insertHistory("book", book.id.toString())
         }
     ) {
         Row(
@@ -661,7 +692,7 @@ fun BookItem(book: Book, navController: NavController) {
 }
 
 @Composable
-fun MovieItem(movie: Movie, navController: NavController) {
+fun MovieItem(movie: Movie, navController: NavController, viewmodel: RealmViewmodel) {
     movie.poster_path?.let { Log.d("posterPath", it) }
     Card(
         modifier = Modifier
@@ -670,7 +701,8 @@ fun MovieItem(movie: Movie, navController: NavController) {
         shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         onClick = {
-            navController.navigate("${Destinations.DETAILED_MOVIE_VIEW}/${movie.id}")
+            navController.navigate("${Destinations.DETAILED_MOVIE_VIEW}/${movie.id}");
+            viewmodel.insertHistory("movie", movie.id.toString())
         }
     ) {
         Row(
@@ -704,7 +736,7 @@ fun MovieItem(movie: Movie, navController: NavController) {
 }
 
 @Composable
-fun TVItem(tvShow: TV, navController: NavController) {
+fun TVItem(tvShow: TV, navController: NavController, viewmodel: RealmViewmodel) {
     tvShow.poster_path?.let { Log.d("posterPath", it) }
     Card(
         modifier = Modifier
@@ -713,7 +745,8 @@ fun TVItem(tvShow: TV, navController: NavController) {
         shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         onClick = {
-            navController.navigate("${Destinations.DETAILED_TV_VIEW}/${tvShow.id}")
+            navController.navigate("${Destinations.DETAILED_TV_VIEW}/${tvShow.id}");
+            viewmodel.insertHistory("tv", tvShow.id.toString())
         }
     ) {
         Row(
@@ -1160,7 +1193,7 @@ fun DetailedBookView(
                             .background(Color.Black)
                     ) {
                         IconButton(
-                            onClick = { navController.popBackStack() },
+                            onClick = { navController.navigateUp() },
                             modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
@@ -1276,7 +1309,7 @@ fun DetailedTvView(
                             .background(Color.Black)
                     ) {
                         IconButton(
-                            onClick = { navController.popBackStack() },
+                            onClick = { navController.navigateUp() },
                             modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
@@ -1383,7 +1416,7 @@ fun DetailedMovieView(
                             .background(Color.Black)
                     ) {
                         IconButton(
-                            onClick = { navController.popBackStack() },
+                            onClick = { navController.navigateUp() },
                             modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
@@ -1498,10 +1531,61 @@ private fun launchAmazon(
 }
 // endregion
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@Composable
+fun History(navController: NavController, viewmodel: RealmViewmodel) {
+    val histories by viewmodel.histories.collectAsState()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Verlauf") },
+                navigationIcon = {
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp)
+                            .clip(CircleShape)
+                            .background(Color.Black)
+                    ) {
+                        IconButton(
+                            onClick = { navController.navigateUp() },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color.White
+                            )
+                        }
+                    }
+                }
+            )
+        },
+        content = {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 75.dp)
+            ) {
+                items(histories) { history ->
+                    BigHistoryCard(
+                        history = history,
+                        modifier = Modifier.fillMaxWidth(),
+                        viewmodel = viewmodel,
+                        navController = navController
+                    )
+                }
+            }
+        }
+    )
+}
+
+@SuppressLint("NewApi")
 @Composable
 fun HistoryView(
     viewModel: RealmViewmodel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    navController: NavController
 ) {
     val histories by viewModel.histories.collectAsState()
 
@@ -1510,12 +1594,115 @@ fun HistoryView(
             .fillMaxSize()
             .padding(horizontal = 16.dp)
     ) {
-        items(histories) { history ->
+        items(histories.take(3)) { history ->
             HistoryCard(
                 history = history,
-                modifier = Modifier,
-                viewmodel = viewModel
+                modifier = Modifier.fillMaxWidth(),
+                viewmodel = viewModel,
+                navController = navController
             )
+        }
+
+        if (histories.size >= 3) {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 1.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.Black)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { navController.navigate(Destinations.HISTORY_ROUTE) }
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Klicke hier für mehr",
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@SuppressLint("NewApi")
+@Composable
+fun BigHistoryCard(
+    history: HistoryEntity,
+    modifier: Modifier = Modifier,
+    viewmodel: RealmViewmodel,
+    navController: NavController
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp)
+            .height(125.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Black),
+        onClick = {
+            when (history.contentTye) {
+                "book" -> {
+                    navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${history.contentId}")
+                }
+
+                "movie" -> {
+                    navController.navigate("${Destinations.DETAILED_MOVIE_VIEW}/${history.contentId}")
+                }
+
+                "tv" -> {
+                    navController.navigate("${Destinations.DETAILED_TV_VIEW}/${history.contentId}")
+                }
+            }
+        }
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val painter = if (history.contentTye != "book") {
+                rememberAsyncImagePainter(model = IMAGE_URL + history.contentImg)
+            } else {
+                val imageUrl =
+                    "https://books.google.com/books/content?id=" + history.contentId + "&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
+                rememberAsyncImagePainter(model = imageUrl)
+            }
+            Image(
+                painter = painter,
+                contentDescription = history.contentTye + " image"
+            )
+            Text(
+                text = if (history.contentTitle.length > 8) history.contentTitle.take(5) + "..." else history.contentTitle,
+                color = Color.White,
+                modifier = Modifier.padding(start = 16.dp)
+            )
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                val date =
+                    """${history.timestamp?.dayOfMonth} ${history.timestamp?.month} ${history.timestamp?.year} ${history.timestamp?.hour}:${history.timestamp?.minute}"""
+                Text(
+                    text = date,
+                    color = Color.LightGray,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+            IconButton(
+                onClick = { viewmodel.deleteHistory(history) },
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete History Item",
+                    tint = Color.Red
+                )
+            }
         }
     }
 }
@@ -1525,11 +1712,30 @@ fun HistoryView(
 fun HistoryCard(
     history: HistoryEntity,
     modifier: Modifier = Modifier,
-    viewmodel: RealmViewmodel
+    viewmodel: RealmViewmodel,
+    navController: NavController
 ) {
     Card(
-        modifier = modifier.fillMaxWidth().padding(top = 1.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Black)
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 1.dp)
+            .height(32.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Black),
+        onClick = {
+            when (history.contentTye) {
+                "book" -> {
+                    navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${history.contentId}")
+                }
+
+                "movie" -> {
+                    navController.navigate("${Destinations.DETAILED_MOVIE_VIEW}/${history.contentId}")
+                }
+
+                "tv" -> {
+                    navController.navigate("${Destinations.DETAILED_TV_VIEW}/${history.contentId}")
+                }
+            }
+        }
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),

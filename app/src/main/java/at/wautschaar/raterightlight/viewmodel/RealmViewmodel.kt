@@ -41,22 +41,26 @@ class RealmViewmodel : ViewModel() {
             try {
                 val cTitle: String
                 val cInfo: String
+                val cImg: String
 
                 when (cType) {
                     "book" -> {
                         val bookInfo = APIBook.retrofitService.getBookByID(cID).volumeInfo
                         cTitle = bookInfo.title
                         cInfo = bookInfo.authors?.getOrNull(0) ?: ""
+                        cImg = bookInfo.imageLinks?.smallThumbnail.toString()
                     }
                     "movie" -> {
                         val movie = APIMDB.retrofitService.getMovieByID(cID)
                         cTitle = movie.title.toString()
                         cInfo = movie.release_date.toString()
+                        cImg = movie.poster_path.toString()
                     }
                     "tv" -> {
                         val tv = APIMDB.retrofitService.getTvByID(cID)
                         cTitle = tv.original_name.toString()
                         cInfo = tv.first_air_date.toString()
+                        cImg = tv.poster_path.toString()
                     }
                     else -> {
                         throw IllegalArgumentException("Unsupported content type: $cType")
@@ -68,6 +72,8 @@ class RealmViewmodel : ViewModel() {
                         contentId = cID
                         contentTitle = cTitle
                         contentInfo = cInfo
+                        contentTye = cType
+                        contentImg = cImg
                         if (timestamp == null) {
                             timestamp = LocalDateTime.now()
                         }

@@ -11,8 +11,10 @@ import java.time.LocalDateTime
 open class HistoryEntity : RealmObject {
     @PrimaryKey var _id: ObjectId = ObjectId()
     var contentId: String = ""
+    var contentTye: String = ""
     var contentTitle: String = ""
     var contentInfo: String = ""
+    var contentImg: String = ""
     @Ignore
     var timestamp: LocalDateTime? = null
 
