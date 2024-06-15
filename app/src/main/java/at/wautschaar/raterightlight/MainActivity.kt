@@ -86,6 +86,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
@@ -271,7 +272,10 @@ class MainActivity : ComponentActivity() {
                             composable(Destinations.HOME_ROUTE) {
                                 Home(
                                     navController,
-                                    viewmodel = RealmViewmodel()
+                                    viewmodel = RealmViewmodel(),
+                                    bookViewModel = BookViewModel(),
+                                    movieViewModel = MovieViewModel(),
+                                    tvViewModel = TvViewModel()
                                 )
                             }
                             //composable(Destinations.SETTINGS_ROUTE) { Settings() }
@@ -306,7 +310,13 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Home(navController: NavController, viewmodel: RealmViewmodel) {
+fun Home(
+    navController: NavController,
+    viewmodel: RealmViewmodel,
+    bookViewModel: BookViewModel,
+    movieViewModel: MovieViewModel,
+    tvViewModel: TvViewModel
+) {
     Column(modifier = Modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
@@ -347,7 +357,10 @@ fun Home(navController: NavController, viewmodel: RealmViewmodel) {
 
         HistoryView(
             viewmodel = viewmodel,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            bviewmodel = bookViewModel,
+            mviewmodel = movieViewModel,
+            tviewmodel = tvViewModel
         )
     }
 }
@@ -922,7 +935,7 @@ fun VerticalBookCard(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = if (book.title.length > 15) book.title.take(15) + "..." else book.title,
+                text = if (book.title.length > 25) book.title.take(15) + "..." else book.title,
                 modifier = Modifier.padding(4.dp),
                 Color.White
             )
@@ -1295,7 +1308,14 @@ private fun launchAmazon(
 }
 
 @Composable
-fun HistoryView(viewmodel: RealmViewmodel, modifier: Modifier = Modifier) {
+fun HistoryView(
+    viewmodel: RealmViewmodel,
+    modifier: Modifier = Modifier,
+    bviewmodel: BookViewModel,
+    mviewmodel: MovieViewModel,
+    tviewmodel: TvViewModel
+
+) {
     val histories by viewmodel.histories.collectAsState()
     LazyColumn(
         modifier = Modifier
@@ -1305,8 +1325,11 @@ fun HistoryView(viewmodel: RealmViewmodel, modifier: Modifier = Modifier) {
         items(histories) { history ->
             HistoryCard(
                 history = history,
-                modifier = Modifier.fillMaxWidth(),
-                realmViewmodel = viewmodel
+                modifier = Modifier,
+                realmViewmodel = viewmodel,
+                bookViewmodel = bviewmodel,
+                movieViewModel = mviewmodel,
+                tvViewmodel = tviewmodel
             )
         }
     }
@@ -1316,9 +1339,46 @@ fun HistoryView(viewmodel: RealmViewmodel, modifier: Modifier = Modifier) {
 fun HistoryCard(
     history: HistoryEntity,
     modifier: Modifier = Modifier,
-    realmViewmodel: RealmViewmodel
+    realmViewmodel: RealmViewmodel,
+    bookViewmodel: BookViewModel,
+    movieViewModel: MovieViewModel,
+    tvViewmodel: TvViewModel
 ) {
-    Row(modifier = Modifier.padding(5.dp)) {
+    val book by bookViewmodel.book.collectAsState()
+    val movie by movieViewModel.movie.collectAsState()
+    val tv by tvViewmodel.tv.collectAsState()
+
+    val historyType = history.contentType
+    val historyId = history.contentId
+
+    var contentName = ""
+    var contentInfo = ""
+
+    when (historyType) {
+        "book" -> {
+            LaunchedEffect(historyId) {
+                bookViewmodel.getBookByID(historyId)
+            }
+            contentName = book?.title.orEmpty()
+            contentInfo = book?.authors?.getOrNull(0).orEmpty()
+        }
+        "movie" -> {
+            LaunchedEffect(historyId) {
+                movieViewModel.getMovieByID(historyId)
+            }
+            contentName = movie?.title.orEmpty()
+            contentInfo = movie?.release_date.orEmpty()
+        }
+        "tv" -> {
+            LaunchedEffect(historyId) {
+                tvViewmodel.getTvByID(historyId)
+            }
+            contentName = tv?.original_name.orEmpty()
+            contentInfo = tv?.first_air_date.orEmpty()
+        }
+    }
+
+    Row(modifier = modifier.padding(5.dp)) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = Color.Black)
@@ -1329,10 +1389,21 @@ fun HistoryCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${history.contentId} ${history.contentType}",
+                    text = contentName,
                     color = Color.White,
-                    modifier = Modifier.padding(start = 16.dp) // Adjust padding as needed
+                    modifier = Modifier.padding(start = 16.dp)
                 )
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = contentInfo,
+                        color = Color.LightGray,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
                 IconButton(
                     onClick = { realmViewmodel.deleteHistory(history) },
                     modifier = Modifier.size(36.dp)
@@ -1348,6 +1419,7 @@ fun HistoryCard(
     }
 }
 
+/*
 //region Movie/TV Test composable and Movie/TV/Book Card/List
 @Composable
 fun Test() {
@@ -1451,3 +1523,4 @@ fun TestRealm(viewmodel: RealmViewmodel) {
     }
 }
 //endregion
+ */
