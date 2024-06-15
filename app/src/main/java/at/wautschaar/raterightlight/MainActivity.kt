@@ -86,7 +86,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
@@ -276,7 +275,12 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                             //composable(Destinations.SETTINGS_ROUTE) { Settings() }
-                            composable(Destinations.TRENDING_ROUTE) { TrendingPage(navController, viewmodel = RealmViewmodel()) }
+                            composable(Destinations.TRENDING_ROUTE) {
+                                TrendingPage(
+                                    navController,
+                                    viewmodel = RealmViewmodel()
+                                )
+                            }
                             composable("${Destinations.DETAILED_BOOK_VIEW}/{bookId}") { backStackEntry ->
                                 val bookId = backStackEntry.arguments?.getString("bookId") ?: ""
                                 DetailedBookView(bookId, navController)
@@ -316,10 +320,14 @@ fun Home(navController: NavController, viewmodel: RealmViewmodel) {
 
         Text(
             text = "Recommended for YOU",
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth(),
             fontSize = 24.sp,
-            textDecoration = TextDecoration.Underline
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
         )
+
         VerticalBookList(
             books = trendingBookList,
             navController = navController,
@@ -329,9 +337,12 @@ fun Home(navController: NavController, viewmodel: RealmViewmodel) {
 
         Text(
             text = "History",
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 16.dp)
+                .fillMaxWidth(),
             fontSize = 24.sp,
-            textDecoration = TextDecoration.Underline
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
         )
 
         HistoryView(
@@ -349,7 +360,7 @@ fun MyList(navController: NavController, viewmodel: RealmViewmodel) {
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
-        ) {  }
+        ) { }
     }
 }
 
@@ -606,15 +617,27 @@ fun TrendingPage(navController: NavController, viewmodel: RealmViewmodel) {
         Box(modifier = Modifier.fillMaxSize()) {
             when (selectedButton) {
                 "Bücher" -> {
-                    BookList(books = trendingBookList, navController = navController, viewmodel = viewmodel)
+                    BookList(
+                        books = trendingBookList,
+                        navController = navController,
+                        viewmodel = viewmodel
+                    )
                 }
 
                 "Filme" -> {
-                    MovieList(movies = trendingMovieList, navController = navController, viewmodel = viewmodel)
+                    MovieList(
+                        movies = trendingMovieList,
+                        navController = navController,
+                        viewmodel = viewmodel
+                    )
                 }
 
                 "Serien" -> {
-                    TVList(tvs = trendingTVList, navController = navController, viewmodel = viewmodel)
+                    TVList(
+                        tvs = trendingTVList,
+                        navController = navController,
+                        viewmodel = viewmodel
+                    )
                 }
             }
         }
@@ -641,7 +664,12 @@ private fun saveSelectedButton(context: Context, selectedButton: String) {
 }
 
 @Composable
-fun MovieList(movies: List<Movie>, modifier: Modifier = Modifier, navController: NavController, viewmodel: RealmViewmodel) {
+fun MovieList(
+    movies: List<Movie>,
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    viewmodel: RealmViewmodel
+) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = modifier.padding(8.dp),
@@ -661,7 +689,12 @@ fun MovieList(movies: List<Movie>, modifier: Modifier = Modifier, navController:
 }
 
 @Composable
-fun MovieCard(movie: Movie, navController: NavController, modifier: Modifier = Modifier, viewmodel: RealmViewmodel) {
+fun MovieCard(
+    movie: Movie,
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    viewmodel: RealmViewmodel
+) {
     Card(
         modifier = modifier.padding(4.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Black),
@@ -697,7 +730,12 @@ fun MovieCard(movie: Movie, navController: NavController, modifier: Modifier = M
 }
 
 @Composable
-fun TVList(tvs: List<TV>, modifier: Modifier = Modifier, navController: NavController, viewmodel: RealmViewmodel) {
+fun TVList(
+    tvs: List<TV>,
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    viewmodel: RealmViewmodel
+) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = modifier.padding(8.dp),
@@ -706,13 +744,23 @@ fun TVList(tvs: List<TV>, modifier: Modifier = Modifier, navController: NavContr
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(tvs) { tv ->
-            TVCard(tv = tv, navController = navController, modifier = Modifier.fillMaxWidth(), viewmodel = viewmodel)
+            TVCard(
+                tv = tv,
+                navController = navController,
+                modifier = Modifier.fillMaxWidth(),
+                viewmodel = viewmodel
+            )
         }
     }
 }
 
 @Composable
-fun TVCard(tv: TV, navController: NavController, modifier: Modifier = Modifier, viewmodel: RealmViewmodel) {
+fun TVCard(
+    tv: TV,
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    viewmodel: RealmViewmodel
+) {
     Card(
         modifier = modifier.padding(4.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Black),
@@ -748,7 +796,12 @@ fun TVCard(tv: TV, navController: NavController, modifier: Modifier = Modifier, 
 }
 
 @Composable
-fun BookList(books: List<Book>, modifier: Modifier = Modifier, navController: NavController, viewmodel: RealmViewmodel) {
+fun BookList(
+    books: List<Book>,
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    viewmodel: RealmViewmodel
+) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = modifier.padding(8.dp),
@@ -757,13 +810,23 @@ fun BookList(books: List<Book>, modifier: Modifier = Modifier, navController: Na
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(books) { book ->
-            BookCard(book = book, navController = navController, modifier = Modifier.fillMaxWidth(), viewmodel = viewmodel)
+            BookCard(
+                book = book,
+                navController = navController,
+                modifier = Modifier.fillMaxWidth(),
+                viewmodel = viewmodel
+            )
         }
     }
 }
 
 @Composable
-fun BookCard(book: Book, navController: NavController, modifier: Modifier = Modifier, viewmodel: RealmViewmodel) {
+fun BookCard(
+    book: Book,
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    viewmodel: RealmViewmodel
+) {
     Card(
         modifier = modifier.padding(4.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Black),
@@ -824,7 +887,12 @@ fun VerticalBookList(
 }
 
 @Composable
-fun VerticalBookCard(book: Book, navController: NavController, modifier: Modifier = Modifier, viewmodel: RealmViewmodel) {
+fun VerticalBookCard(
+    book: Book,
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    viewmodel: RealmViewmodel
+) {
     Card(
         modifier = modifier
             .padding(4.dp)
@@ -1251,7 +1319,10 @@ fun HistoryCard(
     realmViewmodel: RealmViewmodel
 ) {
     Row(modifier = Modifier.padding(5.dp)) {
-        Card (modifier = Modifier.fillMaxWidth(),colors = CardDefaults.cardColors(containerColor = Color.Black)) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color.Black)
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
