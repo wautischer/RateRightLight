@@ -28,7 +28,29 @@ class RealmViewmodel : ViewModel() {
         )
 
     init {
-        testRealm()
+        //testRealm()
+    }
+
+    fun insertHistory(cType: String, cID: String) {
+        viewModelScope.launch {
+            realm.write {
+                val history = HistoryEntity().apply {
+                    contentType = cType
+                    contentId = cID
+                }
+                copyToRealm(history, updatePolicy = UpdatePolicy.ALL)
+            }
+        }
+    }
+
+    fun deleteHistory(historyToDel: HistoryEntity) {
+        viewModelScope.launch {
+            realm.write {
+                val h = historyToDel ?: return@write
+                val h_latest = findLatest(h) ?: return@write
+                delete(h_latest)
+            }
+        }
     }
 
     private fun testRealm() {
