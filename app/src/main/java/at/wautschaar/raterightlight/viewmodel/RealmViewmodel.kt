@@ -68,7 +68,9 @@ class RealmViewmodel : ViewModel() {
                         contentId = cID
                         contentTitle = cTitle
                         contentInfo = cInfo
-                        timestamp = LocalDateTime.now()
+                        if (timestamp == null) {
+                            timestamp = LocalDateTime.now()
+                        }
                     }
                     copyToRealm(history, updatePolicy = UpdatePolicy.ALL)
                 }

@@ -7,12 +7,18 @@ import io.realm.kotlin.types.annotations.PrimaryKey
 import org.mongodb.kbson.ObjectId
 import java.time.LocalDateTime
 
+@SuppressLint("NewApi")
 open class HistoryEntity : RealmObject {
     @PrimaryKey var _id: ObjectId = ObjectId()
     var contentId: String = ""
     var contentTitle: String = ""
     var contentInfo: String = ""
     @Ignore
-    @SuppressLint("NewApi")
-    var timestamp: LocalDateTime = LocalDateTime.now()
+    var timestamp: LocalDateTime? = null
+
+    init {
+        if (timestamp == null) {
+            timestamp = LocalDateTime.now()
+        }
+    }
 }

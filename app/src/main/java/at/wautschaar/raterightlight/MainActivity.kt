@@ -1062,7 +1062,7 @@ fun BookCard(
         }
     }
 }
-// endregion
+//endregion
 
 //region DetailPage
 @Composable
@@ -1512,20 +1512,23 @@ fun HistoryView(
     ) {
         items(histories) { history ->
             HistoryCard(
-                history = history
+                history = history,
+                modifier = Modifier,
+                viewmodel = viewModel
             )
         }
     }
 }
 
+@SuppressLint("NewApi")
 @Composable
 fun HistoryCard(
     history: HistoryEntity,
     modifier: Modifier = Modifier,
-    onDeleteClicked: () -> Unit = {}
+    viewmodel: RealmViewmodel
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().padding(top = 1.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Black)
     ) {
         Row(
@@ -1534,7 +1537,7 @@ fun HistoryCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = if (history.contentTitle.length > 10) history.contentTitle.take(6) + "..." else history.contentTitle,
+                text = if (history.contentTitle.length > 8) history.contentTitle.take(5) + "..." else history.contentTitle,
                 color = Color.White,
                 modifier = Modifier.padding(start = 16.dp)
             )
@@ -1542,21 +1545,23 @@ fun HistoryCard(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.Center
             ) {
+                val date =
+                    """${history.timestamp?.dayOfMonth} ${history.timestamp?.month} ${history.timestamp?.year} ${history.timestamp?.hour}:${history.timestamp?.minute}"""
                 Text(
-                    text = history.contentInfo,
+                    text = date,
                     color = Color.LightGray,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             }
             IconButton(
-                onClick = onDeleteClicked,
+                onClick = { viewmodel.deleteHistory(history) },
                 modifier = Modifier.size(36.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Delete History Item",
-                    tint = Color.White
+                    tint = Color.Red
                 )
             }
         }
