@@ -352,6 +352,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+//region Home
 @Composable
 fun Home(
     navController: NavController,
@@ -405,6 +406,7 @@ fun Home(
         )
     }
 }
+//endregion
 
 // region MyList
 @Composable
@@ -1936,6 +1938,7 @@ private fun launchAmazon(
 }
 // endregion
 
+//region History
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun History(navController: NavController, viewmodel: RealmViewmodel) {
@@ -2178,6 +2181,7 @@ fun BigHistoryCard(
         }
     }
 }
+//endregion
 
 /*
 //region Movie/TV Test composable and Movie/TV/Book Card/List
