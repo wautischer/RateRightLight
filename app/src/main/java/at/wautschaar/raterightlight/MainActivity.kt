@@ -43,15 +43,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.List
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -116,13 +116,13 @@ private const val IMAGE_URL = "https://image.tmdb.org/t/p/original/"
 private var trendingMovieList = emptyList<Movie>()
 private var trendingTVList = emptyList<TV>()
 private var trendingBookList = emptyList<Book>()
-private var history = mutableMapOf<String, String>()
-private var historyCount = 0
+//private var history = mutableMapOf<String, String>()
+//private var historyCount = 0
 
 object Destinations {
     const val MY_LIST_ROUTE = "MyList"
     const val HOME_ROUTE = "Home"
-    const val SETTINGS_ROUTE = "Settings"
+    //const val SETTINGS_ROUTE = "Settings"
     const val TRENDING_ROUTE = "TrendingPage"
     const val DETAILED_BOOK_VIEW = "DetailedBookView"
     const val DETAILED_TV_VIEW = "DetailedTvView"
@@ -207,8 +207,8 @@ class MainActivity : ComponentActivity() {
                             val items = listOf(
                                 BottomNavigationItem(
                                     title = "MyList",
-                                    selectedIcon = Icons.Filled.List,
-                                    unselectedIcon = Icons.Outlined.List,
+                                    selectedIcon = Icons.AutoMirrored.Filled.List,
+                                    unselectedIcon = Icons.AutoMirrored.Outlined.List,
                                     onItemClick = {
                                         navController.navigate(Destinations.MY_LIST_ROUTE)
                                     }
