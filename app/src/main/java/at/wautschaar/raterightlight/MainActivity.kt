@@ -72,7 +72,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -89,6 +91,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -546,7 +549,7 @@ fun ListCard(
                 .heightIn(min = 100.dp)
                 .padding(5.dp)
                 .border(3.dp, Color.Black, RoundedCornerShape(25.dp)),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = Color.Black),
             shape = RoundedCornerShape(25.dp),
             elevation = CardDefaults.cardElevation(4.dp),
             onClick = {
@@ -598,7 +601,7 @@ fun ListCard(
                 ) {
                     Text(
                         text = itemTitle,
-                        color = Color.Black,
+                        color = Color.White,
                         style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Center
                     )
@@ -620,7 +623,7 @@ fun ListCard(
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Delete List Item",
-                        tint = Color.Black
+                        tint = Color.White
                     )
                 }
             }
@@ -716,10 +719,19 @@ fun Searchbar(navController: NavController) {
                 style = TextStyle(fontStyle = FontStyle.Italic)
             )
         },
+        textStyle = TextStyle(color = Color.White),
+        colors = TextFieldDefaults.textFieldColors(
+            containerColor = Color.Black,
+            cursorColor = Color.White,
+            focusedIndicatorColor = Color.White,
+            unfocusedIndicatorColor = Color.White,
+            unfocusedPlaceholderColor = Color.White
+        ),
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
-                contentDescription = "Search"
+                contentDescription = "Search",
+                tint = Color.White
             )
         },
         trailingIcon = {
@@ -727,7 +739,8 @@ fun Searchbar(navController: NavController) {
                 IconButton(onClick = { viewModel.onSearchTextChange("") }) {
                     Icon(
                         imageVector = Icons.Default.Clear,
-                        contentDescription = "Clear"
+                        contentDescription = "Clear",
+                        tint = Color.White
                     )
                 }
             }
