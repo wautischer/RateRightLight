@@ -393,6 +393,7 @@ fun Searchbar(navController: NavController) {
     val isSearching by viewModel.isSearching.collectAsState()
     val searchFilter by viewModel.searchFilter.collectAsState()
 
+    /* Filter auf der Homepage
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -423,6 +424,7 @@ fun Searchbar(navController: NavController) {
                 onClick = { viewModel.onSearchFilterChange(SearchFilter.TV_SHOWS) }
             )
         }
+     */
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -472,7 +474,7 @@ fun Searchbar(navController: NavController) {
                 navController.navigate("searchResult/${searchText}")
             })
         )
-        /*
+        /* Vorschläge beim Suchen
         if (isSearching) {
             Box(modifier = Modifier.fillMaxSize()) {
                 CircularProgressIndicator(
@@ -524,8 +526,8 @@ fun Searchbar(navController: NavController) {
             }
         }
          */
-    }
 }
+
 
 @Composable
 fun FilterButton(

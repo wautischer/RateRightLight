@@ -22,7 +22,7 @@ class SearchViewModel : ViewModel() {
     private val _isSearching = MutableStateFlow(false)
     val isSearching = _isSearching.asStateFlow()
 
-    private val _searchFilter = MutableStateFlow(SearchFilter.BOOKS)
+    private val _searchFilter = MutableStateFlow(SearchFilter.MOVIES)
     val searchFilter = _searchFilter.asStateFlow()
 
     private val _bookSearchResults = MutableStateFlow<List<Book>>(emptyList())
