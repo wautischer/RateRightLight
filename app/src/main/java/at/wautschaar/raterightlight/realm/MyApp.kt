@@ -13,7 +13,8 @@ class MyApp : Application() {
         super.onCreate()
         val config = RealmConfiguration.Builder(
             schema = setOf(
-                HistoryEntity::class
+                HistoryEntity::class,
+                ItemEntity::class
             )
         )
             .schemaVersion(1)

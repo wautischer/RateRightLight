@@ -56,7 +56,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -103,6 +102,7 @@ import at.wautschaar.raterightlight.model.TV
 import at.wautschaar.raterightlight.network.APIBook
 import at.wautschaar.raterightlight.network.APIMDB
 import at.wautschaar.raterightlight.realm.HistoryEntity
+import at.wautschaar.raterightlight.realm.ItemEntity
 import at.wautschaar.raterightlight.ui.theme.RateRightLightTheme
 import at.wautschaar.raterightlight.viewmodel.BookViewModel
 import at.wautschaar.raterightlight.viewmodel.MovieViewModel
@@ -111,6 +111,7 @@ import at.wautschaar.raterightlight.viewmodel.SearchFilter
 import at.wautschaar.raterightlight.viewmodel.SearchViewModel
 import at.wautschaar.raterightlight.viewmodel.TvViewModel
 import coil.compose.rememberAsyncImagePainter
+import kotlinx.coroutines.flow.forEach
 
 private const val IMAGE_URL = "https://image.tmdb.org/t/p/original/"
 private var trendingMovieList = emptyList<Movie>()
@@ -269,7 +270,10 @@ class MainActivity : ComponentActivity() {
                             composable(Destinations.MY_LIST_ROUTE) {
                                 MyList(
                                     navController,
-                                    viewmodel = RealmviewModel
+                                    viewmodel = RealmviewModel,
+                                    bookViewModel = BookViewModel(),
+                                    movieViewModel = MovieViewModel(),
+                                    tvViewModel = TvViewModel()
                                 )
                             }
                             composable(Destinations.HOME_ROUTE) {
@@ -290,7 +294,11 @@ class MainActivity : ComponentActivity() {
                             }
                             composable("${Destinations.DETAILED_BOOK_VIEW}/{bookId}") { backStackEntry ->
                                 val bookId = backStackEntry.arguments?.getString("bookId") ?: ""
-                                DetailedBookView(bookId, navController)
+                                DetailedBookView(
+                                    bookId,
+                                    navController,
+                                    realmViewModel = RealmViewmodel()
+                                )
                             }
                             composable("${Destinations.DETAILED_TV_VIEW}/{tvId}") { backStackEntry ->
                                 val tvId = backStackEntry.arguments?.getString("tvId") ?: ""
@@ -369,7 +377,13 @@ fun Home(
 }
 
 @Composable
-fun MyList(navController: NavController, viewmodel: RealmViewmodel) {
+fun MyList(
+    navController: NavController,
+    viewmodel: RealmViewmodel,
+    bookViewModel: BookViewModel,
+    movieViewModel: MovieViewModel,
+    tvViewModel: TvViewModel
+) {
     Log.d("MyList", "MyList composable loaded")
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -378,6 +392,129 @@ fun MyList(navController: NavController, viewmodel: RealmViewmodel) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(text = "MyList")
+            MyListView(
+                viewmodel = viewmodel,
+                modifier = Modifier.fillMaxWidth(),
+                bookViewmodel = bookViewModel,
+                movieViewmodel = movieViewModel,
+                tvViewmodel = tvViewModel
+            )
+        }
+    }
+}
+
+@Composable
+fun MyListView(
+    viewmodel: RealmViewmodel,
+    modifier: Modifier = Modifier,
+    bookViewmodel: BookViewModel,
+    movieViewmodel: MovieViewModel,
+    tvViewmodel: TvViewModel
+
+) {
+    val item by viewmodel.myList.collectAsState()
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+    ) {
+        items(item) { item ->
+            ListCard(
+                item = item,
+                modifier = Modifier,
+                realmViewmodel = viewmodel,
+                bookViewmodel = bookViewmodel,
+                movieViewModel = movieViewmodel,
+                tvViewmodel = tvViewmodel
+            )
+        }
+    }
+}
+
+@Composable
+fun ListCard(
+    item: ItemEntity,
+    modifier: Modifier = Modifier,
+    realmViewmodel: RealmViewmodel,
+    bookViewmodel: BookViewModel,
+    movieViewModel: MovieViewModel,
+    tvViewmodel: TvViewModel
+) {
+    val book by bookViewmodel.book.collectAsState()
+    val movie by movieViewModel.movie.collectAsState()
+    val tv by tvViewmodel.tv.collectAsState()
+
+    val itemType = item.contentType
+    val itemId = item.contentId
+
+    var contentName = ""
+    var contentInfo = ""
+
+    when (itemType) {
+        "book" -> {
+            LaunchedEffect(itemId) {
+                bookViewmodel.getBookByID(itemId)
+            }
+            contentName = book?.title.orEmpty()
+            contentInfo = book?.authors?.getOrNull(0).orEmpty()
+        }
+
+        "movie" -> {
+            LaunchedEffect(itemId) {
+                movieViewModel.getMovieByID(itemId)
+            }
+            contentName = movie?.title.orEmpty()
+            contentInfo = movie?.release_date.orEmpty()
+        }
+
+        "tv" -> {
+            LaunchedEffect(itemId) {
+                tvViewmodel.getTvByID(itemId)
+            }
+            contentName = tv?.original_name.orEmpty()
+            contentInfo = tv?.first_air_date.orEmpty()
+        }
+    }
+
+    Row(modifier = modifier.padding(5.dp)) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color.Black)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = contentName,
+                    color = Color.White,
+                    modifier = Modifier.padding(start = 16.dp)
+                )
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = contentInfo,
+                        color = Color.LightGray,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+                IconButton(
+                    onClick = {
+                        realmViewmodel.deleteItem(item)
+                    },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete List Item",
+                        tint = Color.White
+                    )
+                }
+            }
         }
     }
 }
@@ -426,106 +563,106 @@ fun Searchbar(navController: NavController) {
         }
      */
 
-        Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(16.dp))
 
-        TextField(
-            value = searchText,
-            onValueChange = { newSearchText ->
-                viewModel.onSearchTextChange(newSearchText)
-                when (searchFilter) {
-                    SearchFilter.BOOKS -> viewModel.fetchBooks(newSearchText)
-                    SearchFilter.MOVIES -> viewModel.fetchMovies(newSearchText)
-                    SearchFilter.TV_SHOWS -> viewModel.fetchTVShows(newSearchText)
+    TextField(
+        value = searchText,
+        onValueChange = { newSearchText ->
+            viewModel.onSearchTextChange(newSearchText)
+            when (searchFilter) {
+                SearchFilter.BOOKS -> viewModel.fetchBooks(newSearchText)
+                SearchFilter.MOVIES -> viewModel.fetchMovies(newSearchText)
+                SearchFilter.TV_SHOWS -> viewModel.fetchTVShows(newSearchText)
+            }
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(25.dp)),
+        placeholder = {
+            Text(
+                text = "Search",
+                style = TextStyle(fontStyle = FontStyle.Italic)
+            )
+        },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = "Search"
+            )
+        },
+        trailingIcon = {
+            if (searchText.isNotEmpty()) {
+                IconButton(onClick = { viewModel.onSearchTextChange("") }) {
+                    Icon(
+                        imageVector = Icons.Default.Clear,
+                        contentDescription = "Clear"
+                    )
                 }
-            },
+            }
+        },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = {
+            when (viewModel.searchFilter.value) {
+                SearchFilter.BOOKS -> viewModel.fetchBooks(searchText)
+                SearchFilter.MOVIES -> viewModel.fetchMovies(searchText)
+                SearchFilter.TV_SHOWS -> viewModel.fetchTVShows(searchText)
+            }
+            navController.navigate("searchResult/${searchText}")
+        })
+    )
+    /* Vorschläge beim Suchen
+    if (isSearching) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
+    } else {
+        LazyColumn(
             modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(25.dp)),
-            placeholder = {
-                Text(
-                    text = "Search",
-                    style = TextStyle(fontStyle = FontStyle.Italic)
-                )
-            },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search"
-                )
-            },
-            trailingIcon = {
-                if (searchText.isNotEmpty()) {
-                    IconButton(onClick = { viewModel.onSearchTextChange("") }) {
-                        Icon(
-                            imageVector = Icons.Default.Clear,
-                            contentDescription = "Clear"
+                .fillMaxSize()
+        ) {
+            when (searchFilter) {
+                SearchFilter.BOOKS -> {
+                    items(bookData) { item ->
+                        Text(
+                            text = "${item.title}",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 10.dp)
+                                .padding(16.dp)
                         )
                     }
                 }
-            },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = {
-                when (viewModel.searchFilter.value) {
-                    SearchFilter.BOOKS -> viewModel.fetchBooks(searchText)
-                    SearchFilter.MOVIES -> viewModel.fetchMovies(searchText)
-                    SearchFilter.TV_SHOWS -> viewModel.fetchTVShows(searchText)
+
+                SearchFilter.MOVIES -> {
+                    items(movieData) { item ->
+                        Text(
+                            text = "${item.title}",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 10.dp)
+                                .padding(16.dp)
+                        )
+                    }
                 }
-                navController.navigate("searchResult/${searchText}")
-            })
-        )
-        /* Vorschläge beim Suchen
-        if (isSearching) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-            ) {
-                when (searchFilter) {
-                    SearchFilter.BOOKS -> {
-                        items(bookData) { item ->
-                            Text(
-                                text = "${item.title}",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 10.dp)
-                                    .padding(16.dp)
-                            )
-                        }
-                    }
 
-                    SearchFilter.MOVIES -> {
-                        items(movieData) { item ->
-                            Text(
-                                text = "${item.title}",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 10.dp)
-                                    .padding(16.dp)
-                            )
-                        }
-                    }
-
-                    SearchFilter.TV_SHOWS -> {
-                        items(tvData) { item ->
-                            Text(
-                                text = "${item.original_name}",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 10.dp)
-                                    .padding(16.dp)
-                            )
-                        }
+                SearchFilter.TV_SHOWS -> {
+                    items(tvData) { item ->
+                        Text(
+                            text = "${item.original_name}",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 10.dp)
+                                .padding(16.dp)
+                        )
                     }
                 }
             }
         }
-         */
+    }
+     */
 }
 
 
@@ -1149,12 +1286,19 @@ fun VerticalBookCard(
 fun DetailedBookView(
     bookId: String,
     navController: NavController,
-    viewModel: BookViewModel = viewModel()
+    viewModel: BookViewModel = viewModel(),
+    realmViewModel: RealmViewmodel
 ) {
     val book by viewModel.book.collectAsState()
+    val items by realmViewModel.myList.collectAsState()
+    val itemInListState = remember { mutableStateOf(false) }
 
     LaunchedEffect(bookId) {
         viewModel.getBookByID(bookId)
+        itemInListState.value = realmViewModel.isItemInList(
+            contentType = "book",
+            contentId = bookId
+        )
     }
 
     Scaffold(
@@ -1247,6 +1391,22 @@ fun DetailedBookView(
                     val description = book?.description ?: "Keine Beschreibung vorhanden!"
                     val plainDescription = removeHtmlTags(description)
                     Text(text = plainDescription)
+                }
+                item {
+                    Button(
+                        onClick = {
+                            if (!itemInListState.value) {
+                                realmViewModel.insertItem("book", bookId)
+                                itemInListState.value = true
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Black,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Text("Zu Liste hinzufügen")
+                    }
                 }
                 item {
                     AmazonButton(
@@ -1562,6 +1722,7 @@ fun HistoryCard(
             contentName = book?.title.orEmpty()
             contentInfo = book?.authors?.getOrNull(0).orEmpty()
         }
+
         "movie" -> {
             LaunchedEffect(historyId) {
                 movieViewModel.getMovieByID(historyId)
@@ -1569,6 +1730,7 @@ fun HistoryCard(
             contentName = movie?.title.orEmpty()
             contentInfo = movie?.release_date.orEmpty()
         }
+
         "tv" -> {
             LaunchedEffect(historyId) {
                 tvViewmodel.getTvByID(historyId)

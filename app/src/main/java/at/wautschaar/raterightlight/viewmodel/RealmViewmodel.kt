@@ -3,6 +3,7 @@ package at.wautschaar.raterightlight.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import at.wautschaar.raterightlight.realm.HistoryEntity
+import at.wautschaar.raterightlight.realm.ItemEntity
 import at.wautschaar.raterightlight.realm.MyApp
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.ext.query
@@ -69,4 +70,43 @@ class RealmViewmodel : ViewModel() {
             }
         }
     }
+
+    val myList = realm
+        .query<ItemEntity>()
+        .asFlow()
+        .map { results ->
+            results.list.toList()
+        }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(),
+            emptyList()
+        )
+
+    fun isItemInList(contentId: String, contentType: String): Boolean {
+        return myList.value.any { it.contentId == contentId && it.contentType == contentType }
+    }
+
+    fun insertItem(cType: String, cID: String) {
+        viewModelScope.launch {
+            realm.write {
+                val item = ItemEntity().apply {
+                    contentType = cType
+                    contentId = cID
+                }
+                copyToRealm(item, updatePolicy = UpdatePolicy.ALL)
+            }
+        }
+    }
+
+    fun deleteItem(itemToDel: ItemEntity) {
+        viewModelScope.launch {
+            realm.write {
+                val i = itemToDel ?: return@write
+                val i_latest = findLatest(i) ?: return@write
+                delete(i_latest)
+            }
+        }
+    }
+
 }
