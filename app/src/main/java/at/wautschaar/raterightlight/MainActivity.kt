@@ -98,6 +98,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
@@ -836,7 +837,17 @@ fun SearchResultPage(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Ergebnisse für '$query'") },
+                title = {
+                    Text(
+                        text = "Ergebnisse für '$query'",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black,
+                            textAlign = TextAlign.Center
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                },
                 navigationIcon = {
                     Box(
                         modifier = Modifier
@@ -845,72 +856,90 @@ fun SearchResultPage(
                             .background(Color.Black)
                     ) {
                         IconButton(
-                            onClick = { navController.navigateUp() }
+                            onClick = { navController.navigateUp() },
+                            modifier = Modifier
+                                .size(36.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
                                 contentDescription = "Back",
-                                tint = Color.White
+                                tint = Color.White,
                             )
                         }
                     }
-                }
+                },
             )
         },
         content = {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                item {
-                    Spacer(modifier = Modifier.height(60.dp))
-                }
-                Log.d("Filter", "${viewModel.searchFilter.value}")
-                when (viewModel.searchFilter.value) {
-                    SearchFilter.BOOKS -> {
-                        Log.d("SearchResult", "Displaying book results")
-                        items(bookSearchResults) { book ->
-                            BookItem(
-                                book = book,
-                                navController = navController,
-                                viewmodel = viewmodel
-                            )
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .background(Color.White, RoundedCornerShape(0.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        item {
+                            Spacer(modifier = Modifier.height(60.dp))
                         }
-                    }
+                        Log.d("Filter", "${viewModel.searchFilter.value}")
+                        when (viewModel.searchFilter.value) {
+                            SearchFilter.BOOKS -> {
+                                Log.d("SearchResult", "Displaying book results")
+                                items(bookSearchResults) { book ->
+                                    BookItem(
+                                        book = book,
+                                        navController = navController,
+                                        viewmodel = viewmodel
+                                    )
+                                }
+                            }
 
-                    SearchFilter.MOVIES -> {
-                        Log.d("SearchResult", "Displaying movie results")
-                        items(movieSearchResults) { movie ->
-                            MovieItem(
-                                movie = movie,
-                                navController = navController,
-                                viewmodel = viewmodel
-                            )
-                        }
-                    }
+                            SearchFilter.MOVIES -> {
+                                Log.d("SearchResult", "Displaying movie results")
+                                items(movieSearchResults) { movie ->
+                                    MovieItem(
+                                        movie = movie,
+                                        navController = navController,
+                                        viewmodel = viewmodel
+                                    )
+                                }
+                            }
 
-                    SearchFilter.TV_SHOWS -> {
-                        Log.d("SearchResult", "Displaying TV show results")
-                        items(tvSearchResults) { tvShow ->
-                            TVItem(
-                                tvShow = tvShow,
-                                navController = navController,
-                                viewmodel = viewmodel
-                            )
+                            SearchFilter.TV_SHOWS -> {
+                                Log.d("SearchResult", "Displaying TV show results")
+                                items(tvSearchResults) { tvShow ->
+                                    TVItem(
+                                        tvShow = tvShow,
+                                        navController = navController,
+                                        viewmodel = viewmodel
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             }
         }
     )
+
 }
 
 @Composable
 fun BookItem(book: Book, navController: NavController, viewmodel: RealmViewmodel) {
-    book.imageUrl?.let { Log.d("imageURL", it) }
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            .padding(8.dp)
+            .border(3.dp, Color.Black, RoundedCornerShape(25.dp)),
+        colors = CardDefaults.cardColors(containerColor = Color.Black),
+        shape = RoundedCornerShape(25.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
         onClick = {
             navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${book.id}");
             viewmodel.insertHistory("book", book.id.toString())
@@ -919,25 +948,43 @@ fun BookItem(book: Book, navController: NavController, viewmodel: RealmViewmodel
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            val imageUrl1 = "https://books.google.com/books/content?id="
-            val imageUrl2 = "&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
-            val painter = rememberAsyncImagePainter(model = imageUrl1 + book.id + imageUrl2)
-            Image(
-                painter = painter,
-                contentDescription = book.title,
-                modifier = Modifier.size(100.dp),
-                contentScale = ContentScale.Crop
-            )
+            Box(
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(RoundedCornerShape(25.dp))
+                    .background(Color.LightGray)
+            ) {
+                val imageUrl =
+                    "https://books.google.com/books/content?id=${book.id}&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
+                val painter = rememberAsyncImagePainter(model = imageUrl)
+                Image(
+                    painter = painter,
+                    contentDescription = book.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
             Spacer(modifier = Modifier.width(16.dp))
             Column(
-                modifier = Modifier.align(Alignment.CenterVertically)
+                modifier = Modifier
+                    .weight(1f)
+                    .align(Alignment.CenterVertically)
             ) {
-                Text(text = book.title, style = MaterialTheme.typography.headlineMedium)
                 Text(
-                    text = book.authors?.joinToString() ?: "unkown",
-                    style = MaterialTheme.typography.bodyMedium
+                    text = book.title,
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text = book.authors?.joinToString() ?: "Unknown",
+                    color = Color.LightGray,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
                 )
             }
         }
@@ -946,13 +993,14 @@ fun BookItem(book: Book, navController: NavController, viewmodel: RealmViewmodel
 
 @Composable
 fun MovieItem(movie: Movie, navController: NavController, viewmodel: RealmViewmodel) {
-    movie.poster_path?.let { Log.d("posterPath", it) }
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            .padding(8.dp)
+            .border(3.dp, Color.Black, RoundedCornerShape(25.dp)),
+        colors = CardDefaults.cardColors(containerColor = Color.Black),
+        shape = RoundedCornerShape(25.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
         onClick = {
             navController.navigate("${Destinations.DETAILED_MOVIE_VIEW}/${movie.id}");
             viewmodel.insertHistory("movie", movie.id.toString())
@@ -961,27 +1009,42 @@ fun MovieItem(movie: Movie, navController: NavController, viewmodel: RealmViewmo
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            val imageUrl = "https://image.tmdb.org/t/p/w500" + movie.poster_path
-            val painter = rememberAsyncImagePainter(model = imageUrl)
-            Image(
-                painter = painter,
-                contentDescription = movie.title,
-                modifier = Modifier.size(100.dp),
-                contentScale = ContentScale.Crop
-            )
+            Box(
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(RoundedCornerShape(25.dp))
+                    .background(Color.LightGray)
+            ) {
+                val imageUrl = "https://image.tmdb.org/t/p/w500${movie.poster_path}"
+                val painter = rememberAsyncImagePainter(model = imageUrl)
+                Image(
+                    painter = painter,
+                    contentDescription = movie.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
             Spacer(modifier = Modifier.width(16.dp))
             Column(
-                modifier = Modifier.align(Alignment.CenterVertically)
+                modifier = Modifier
+                    .weight(1f)
+                    .align(Alignment.CenterVertically)
             ) {
                 Text(
-                    text = movie.title ?: "Unknown Title",
-                    style = MaterialTheme.typography.headlineMedium
+                    text = movie.title ?: "Unknown",
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center
                 )
                 Text(
-                    text = movie.release_date ?: "Unknown Date",
-                    style = MaterialTheme.typography.bodyMedium
+                    text = movie.release_date ?: "Unknown",
+                    color = Color.LightGray,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
                 )
             }
         }
@@ -990,13 +1053,14 @@ fun MovieItem(movie: Movie, navController: NavController, viewmodel: RealmViewmo
 
 @Composable
 fun TVItem(tvShow: TV, navController: NavController, viewmodel: RealmViewmodel) {
-    tvShow.poster_path?.let { Log.d("posterPath", it) }
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        shape = RoundedCornerShape(8.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            .padding(8.dp)
+            .border(3.dp, Color.Black, RoundedCornerShape(25.dp)),
+        colors = CardDefaults.cardColors(containerColor = Color.Black),
+        shape = RoundedCornerShape(25.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
         onClick = {
             navController.navigate("${Destinations.DETAILED_TV_VIEW}/${tvShow.id}");
             viewmodel.insertHistory("tv", tvShow.id.toString())
@@ -1005,32 +1069,50 @@ fun TVItem(tvShow: TV, navController: NavController, viewmodel: RealmViewmodel) 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            val imageUrl = "https://image.tmdb.org/t/p/w500" + tvShow.poster_path
-            val painter = rememberAsyncImagePainter(model = imageUrl)
-            Image(
-                painter = painter,
-                contentDescription = tvShow.original_name,
-                modifier = Modifier.size(100.dp),
-                contentScale = ContentScale.Crop
-            )
+            Box(
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(RoundedCornerShape(25.dp))
+                    .background(Color.LightGray)
+            ) {
+                val imageUrl = "https://image.tmdb.org/t/p/w500${tvShow.poster_path}"
+                val painter = rememberAsyncImagePainter(model = imageUrl)
+                Image(
+                    painter = painter,
+                    contentDescription = tvShow.original_name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
             Spacer(modifier = Modifier.width(16.dp))
             Column(
-                modifier = Modifier.align(Alignment.CenterVertically)
+                modifier = Modifier
+                    .weight(1f)
+                    .align(Alignment.CenterVertically)
             ) {
                 Text(
-                    text = tvShow.original_name ?: "Unknown Name",
-                    style = MaterialTheme.typography.headlineMedium
+                    text = tvShow.original_name ?: "Unknown",
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = tvShow.first_air_date ?: "Unknown Date",
-                    style = MaterialTheme.typography.bodyMedium
+                    text = tvShow.first_air_date ?: "Unknown",
+                    color = Color.LightGray,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
                 )
             }
         }
     }
 }
+
 // endregion
 
 //region TrendingPage
