@@ -17,6 +17,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,6 +29,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -92,6 +94,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
@@ -115,6 +118,7 @@ import at.wautschaar.raterightlight.viewmodel.SearchFilter
 import at.wautschaar.raterightlight.viewmodel.SearchViewModel
 import at.wautschaar.raterightlight.viewmodel.TvViewModel
 import coil.compose.rememberAsyncImagePainter
+import coil.compose.rememberImagePainter
 import kotlinx.coroutines.flow.forEach
 
 private const val IMAGE_URL = "https://image.tmdb.org/t/p/original/"
@@ -127,6 +131,7 @@ private var trendingBookList = emptyList<Book>()
 object Destinations {
     const val MY_LIST_ROUTE = "MyList"
     const val HOME_ROUTE = "Home"
+
     //const val SETTINGS_ROUTE = "Settings"
     const val TRENDING_ROUTE = "TrendingPage"
     const val DETAILED_BOOK_VIEW = "DetailedBookView"
@@ -313,11 +318,19 @@ class MainActivity : ComponentActivity() {
                             }
                             composable("${Destinations.DETAILED_TV_VIEW}/{tvId}") { backStackEntry ->
                                 val tvId = backStackEntry.arguments?.getString("tvId") ?: ""
-                                DetailedTvView(tvId = tvId, navController = navController)
+                                DetailedTvView(
+                                    tvId = tvId,
+                                    navController = navController,
+                                    realmViewModel = RealmViewmodel()
+                                )
                             }
                             composable("${Destinations.DETAILED_MOVIE_VIEW}/{movieId}") { backStackEntry ->
                                 val movieId = backStackEntry.arguments?.getString("movieId") ?: ""
-                                DetailedMovieView(movieId = movieId, navController = navController)
+                                DetailedMovieView(
+                                    movieId = movieId,
+                                    navController = navController,
+                                    realmViewModel = RealmViewmodel()
+                                )
                             }
                             composable("searchResult/{query}") { backStackEntry ->
                                 val query = backStackEntry.arguments?.getString("query") ?: ""
@@ -389,6 +402,7 @@ fun Home(
     }
 }
 
+// region MyList
 @Composable
 fun MyList(
     navController: NavController,
@@ -398,15 +412,57 @@ fun MyList(
     tvViewModel: TvViewModel
 ) {
     Log.d("MyList", "MyList composable loaded")
+    var selectedFilter by remember { mutableStateOf("book") }
+
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "MyList")
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .background(Color.White, RoundedCornerShape(25.dp))
+                    .border(4.dp, Color.Black, RoundedCornerShape(25.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "MyList",
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black,
+                        textAlign = TextAlign.Center
+                    )
+                )
+            }
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FilterButton(
+                    text = "Books",
+                    isSelected = selectedFilter == "book",
+                    onClick = { selectedFilter = "book" }
+                )
+                FilterButton(
+                    text = "Movies",
+                    isSelected = selectedFilter == "movie",
+                    onClick = { selectedFilter = "movie" }
+                )
+                FilterButton(
+                    text = "Series",
+                    isSelected = selectedFilter == "tv",
+                    onClick = { selectedFilter = "tv" }
+                )
+            }
+
             MyListView(
+                navController = navController,
                 viewmodel = viewmodel,
+                selectedFilter = selectedFilter,
                 modifier = Modifier.fillMaxWidth(),
                 bookViewmodel = bookViewModel,
                 movieViewmodel = movieViewModel,
@@ -418,34 +474,42 @@ fun MyList(
 
 @Composable
 fun MyListView(
+    navController: NavController,
     viewmodel: RealmViewmodel,
     modifier: Modifier = Modifier,
+    selectedFilter: String,
     bookViewmodel: BookViewModel,
     movieViewmodel: MovieViewModel,
     tvViewmodel: TvViewModel
 
 ) {
     val item by viewmodel.myList.collectAsState()
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp)
     ) {
         items(item) { item ->
-            ListCard(
-                item = item,
-                modifier = Modifier,
-                realmViewmodel = viewmodel,
-                bookViewmodel = bookViewmodel,
-                movieViewModel = movieViewmodel,
-                tvViewmodel = tvViewmodel
-            )
+            if (item.contentTye == selectedFilter) {
+                ListCard(
+                    navController = navController,
+                    item = item,
+                    modifier = Modifier,
+                    realmViewmodel = viewmodel,
+                    bookViewmodel = bookViewmodel,
+                    movieViewModel = movieViewmodel,
+                    tvViewmodel = tvViewmodel
+                )
+            }
         }
     }
 }
 
+@SuppressLint("NewApi")
 @Composable
 fun ListCard(
+    navController: NavController,
     item: ItemEntity,
     modifier: Modifier = Modifier,
     realmViewmodel: RealmViewmodel,
@@ -453,67 +517,99 @@ fun ListCard(
     movieViewModel: MovieViewModel,
     tvViewmodel: TvViewModel
 ) {
-    val book by bookViewmodel.book.collectAsState()
-    val movie by movieViewModel.movie.collectAsState()
-    val tv by tvViewmodel.tv.collectAsState()
-
-    val itemType = item.contentType
+    val itemType = item.contentTye
     val itemId = item.contentId
+    val itemTitle = item.contentTitle
+    val itemInfo = item.contentInfo
+    val itemImage = item.contentImg
 
-    var contentName = ""
-    var contentInfo = ""
-
-    when (itemType) {
-        "book" -> {
-            LaunchedEffect(itemId) {
-                bookViewmodel.getBookByID(itemId)
+    LaunchedEffect(itemId) {
+        when (itemType) {
+            "book" -> {
+                bookViewmodel.getBookByID(item.contentId)
             }
-            contentName = book?.title.orEmpty()
-            contentInfo = book?.authors?.getOrNull(0).orEmpty()
-        }
 
-        "movie" -> {
-            LaunchedEffect(itemId) {
-                movieViewModel.getMovieByID(itemId)
+            "movie" -> {
+                movieViewModel.getMovieByID(item.contentId)
             }
-            contentName = movie?.title.orEmpty()
-            contentInfo = movie?.release_date.orEmpty()
-        }
 
-        "tv" -> {
-            LaunchedEffect(itemId) {
-                tvViewmodel.getTvByID(itemId)
+            "tv" -> {
+                tvViewmodel.getTvByID(item.contentId)
             }
-            contentName = tv?.original_name.orEmpty()
-            contentInfo = tv?.first_air_date.orEmpty()
         }
     }
 
-    Row(modifier = modifier.padding(5.dp)) {
+    Row(modifier = modifier.heightIn(min = 100.dp)) {
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color.Black)
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 100.dp)
+                .padding(5.dp)
+                .border(3.dp, Color.Black, RoundedCornerShape(25.dp)),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            shape = RoundedCornerShape(25.dp),
+            elevation = CardDefaults.cardElevation(4.dp),
+            onClick = {
+                when (itemType) {
+                    "book" -> navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${itemId}")
+                    "movie" -> navController.navigate("${Destinations.DETAILED_MOVIE_VIEW}/${itemId}")
+                    "tv" -> navController.navigate("${Destinations.DETAILED_TV_VIEW}/${itemId}")
+                }
+            }
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = contentName,
-                    color = Color.White,
-                    modifier = Modifier.padding(start = 16.dp)
-                )
                 Box(
-                    modifier = Modifier.weight(1f),
-                    contentAlignment = Alignment.Center
+                    modifier = Modifier
+                        .width(100.dp)
+                        .height(100.dp)
+                        .clip(RoundedCornerShape(25.dp))
+                        .background(Color.LightGray)
+                ) {
+                    itemImage?.let {
+                        Image(
+                            painter = rememberImagePainter(
+                                when (itemType) {
+                                    "book" -> it
+                                    "movie" -> IMAGE_URL + it
+                                    "tv" -> IMAGE_URL + it
+                                    else -> {}
+                                }
+                            ),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight()
+                                .clip(RoundedCornerShape(25.dp)),
+                            contentScale = ContentScale.FillBounds
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(
+                    modifier = Modifier
+                        .weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = contentInfo,
-                        color = Color.LightGray,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        text = itemTitle,
+                        color = Color.Black,
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center
                     )
+
+                    Text(
+                        text = itemInfo,
+                        color = Color.LightGray,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
                 }
                 IconButton(
                     onClick = {
@@ -524,13 +620,37 @@ fun ListCard(
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Delete List Item",
-                        tint = Color.White
+                        tint = Color.Black
                     )
                 }
             }
         }
     }
 }
+
+@Composable
+fun FilterButton(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isSelected) Color.Black else Color.LightGray
+        ),
+        modifier = Modifier
+            .widthIn(120.dp)
+            .padding(8.dp)
+    ) {
+        Text(
+            text = text,
+            color = if (isSelected) Color.White else Color.Black
+        )
+    }
+}
+
+// endregion
 
 //region search function
 @Composable
@@ -675,26 +795,6 @@ fun Searchbar(navController: NavController) {
         }
     }
      */
-}
-
-@Composable
-fun FilterButton(
-    text: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (isSelected) Color.Black else Color.LightGray
-        ),
-        modifier = Modifier.widthIn(120.dp)
-    ) {
-        Text(
-            text = text,
-            color = if (isSelected) Color.White else Color.Black
-        )
-    }
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "StateFlowValueCalledInComposition")
@@ -1423,7 +1523,7 @@ fun DetailedBookView(
                     Button(
                         onClick = {
                             if (!itemInListState.value) {
-                                realmViewModel.insertItem("book", bookId)
+                                realmViewModel.insertItem("book", book?.id.toString())
                                 itemInListState.value = true
                             }
                         },
@@ -1452,12 +1552,18 @@ fun DetailedBookView(
 fun DetailedTvView(
     tvId: String,
     navController: NavController,
-    viewModel: TvViewModel = viewModel()
+    viewModel: TvViewModel = viewModel(),
+    realmViewModel: RealmViewmodel
 ) {
     val tv by viewModel.tv.collectAsState()
+    val itemInListState = remember { mutableStateOf(false) }
 
     LaunchedEffect(tvId) {
         viewModel.getTvByID(tvId)
+        itemInListState.value = realmViewModel.isItemInList(
+            contentType = "tv",
+            contentId = tvId
+        )
     }
 
     Scaffold(
@@ -1543,6 +1649,23 @@ fun DetailedTvView(
                     Text(text = plainDescription)
                 }
                 item {
+                    Button(
+                        onClick = {
+                            if (!itemInListState.value) {
+                                realmViewModel.insertItem("tv", tv?.id.toString())
+                                itemInListState.value = true
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Black,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Text("Zu Liste hinzufügen")
+                    }
+                }
+
+                item {
                     AmazonButton(
                         bookTitle = tv?.original_name.toString(),
                         author = tv?.first_air_date.toString()
@@ -1559,12 +1682,19 @@ fun DetailedTvView(
 fun DetailedMovieView(
     movieId: String,
     navController: NavController,
-    viewModel: MovieViewModel = viewModel()
+    viewModel: MovieViewModel = viewModel(),
+    realmViewModel: RealmViewmodel
 ) {
     val movie by viewModel.movie.collectAsState()
+    val itemInListState = remember { mutableStateOf(false) }
 
     LaunchedEffect(movieId) {
         viewModel.getMovieByID(movieId)
+        itemInListState.value = realmViewModel.isItemInList(
+            contentType = "movie",
+            contentId = movieId
+        )
+
     }
 
     Scaffold(
@@ -1652,6 +1782,23 @@ fun DetailedMovieView(
                     val plainDescription = removeHtmlTags(description)
                     Text(text = plainDescription)
                 }
+                item {
+                    Button(
+                        onClick = {
+                            if (!itemInListState.value) {
+                                realmViewModel.insertItem("movie", movie?.id.toString())
+                                itemInListState.value = true
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Black,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Text("Zu Liste hinzufügen")
+                    }
+                }
+
                 item {
                     AmazonButton(
                         bookTitle = movie?.title.toString(),

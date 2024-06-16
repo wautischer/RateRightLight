@@ -129,17 +129,52 @@ class RealmViewmodel : ViewModel() {
         )
 
     fun isItemInList(contentId: String, contentType: String): Boolean {
-        return myList.value.any { it.contentId == contentId && it.contentType == contentType }
+        return myList.value.any { it.contentId == contentId && it.contentTye == contentType }
     }
 
     fun insertItem(cType: String, cID: String) {
         viewModelScope.launch {
-            realm.write {
-                val item = ItemEntity().apply {
-                    contentType = cType
-                    contentId = cID
+            try {
+                val cTitle: String
+                val cInfo: String
+                val cImg: String
+
+                when (cType) {
+                    "book" -> {
+                        val bookInfo = APIBook.retrofitService.getBookByID(cID).volumeInfo
+                        cTitle = bookInfo.title
+                        cInfo = bookInfo.authors?.getOrNull(0) ?: ""
+                        cImg = bookInfo.imageLinks?.smallThumbnail.toString()
+                    }
+                    "movie" -> {
+                        val movie = APIMDB.retrofitService.getMovieByID(cID)
+                        cTitle = movie.title.toString()
+                        cInfo = movie.release_date.toString()
+                        cImg = movie.poster_path.toString()
+                    }
+                    "tv" -> {
+                        val tv = APIMDB.retrofitService.getTvByID(cID)
+                        cTitle = tv.original_name.toString()
+                        cInfo = tv.first_air_date.toString()
+                        cImg = tv.poster_path.toString()
+                    }
+                    else -> {
+                        throw IllegalArgumentException("Unsupported content type: $cType")
+                    }
                 }
-                copyToRealm(item, updatePolicy = UpdatePolicy.ALL)
+
+                realm.write {
+                    val item = ItemEntity().apply {
+                        contentId = cID
+                        contentTitle = cTitle
+                        contentInfo = cInfo
+                        contentTye = cType
+                        contentImg = cImg
+                    }
+                    copyToRealm(item, updatePolicy = UpdatePolicy.ALL)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
