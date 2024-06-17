@@ -115,13 +115,11 @@ import at.wautschaar.raterightlight.viewmodel.SearchFilter
 import at.wautschaar.raterightlight.viewmodel.SearchViewModel
 import at.wautschaar.raterightlight.viewmodel.TvViewModel
 import coil.compose.rememberAsyncImagePainter
-import coil.compose.rememberImagePainter
 
 private const val IMAGE_URL = "https://image.tmdb.org/t/p/original/"
 private var trendingMovieList = emptyList<Movie>()
 private var trendingTVList = emptyList<TV>()
 private var trendingBookList = emptyList<Book>()
-
 //private var history = mutableMapOf<String, String>()
 //private var historyCount = 0
 private const val PREFS_NAME = "com.example.myapp.PREFS_NAME"
@@ -143,7 +141,6 @@ private fun saveSelectedButton(context: Context, selectedButton: String) {
 object Destinations {
     const val MY_LIST_ROUTE = "MyList"
     const val HOME_ROUTE = "Home"
-
     //const val SETTINGS_ROUTE = "Settings"
     const val TRENDING_ROUTE = "TrendingPage"
     const val DETAILED_BOOK_VIEW = "DetailedBookView"
@@ -161,7 +158,7 @@ data class BottomNavigationItem(
 
 class MainActivity : ComponentActivity() {
 
-    private val RealmviewModel: RealmViewmodel by viewModels()
+    private val realmviewModel: RealmViewmodel by viewModels()
 
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -292,7 +289,7 @@ class MainActivity : ComponentActivity() {
                             composable(Destinations.MY_LIST_ROUTE) {
                                 MyList(
                                     navController,
-                                    viewmodel = RealmviewModel,
+                                    viewmodel = realmviewModel,
                                     bookViewModel = BookViewModel(),
                                     movieViewModel = MovieViewModel(),
                                     tvViewModel = TvViewModel()
@@ -360,7 +357,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-//region Home
+//region Pages
 @Composable
 fun Home(
     navController: NavController,
@@ -414,9 +411,7 @@ fun Home(
         )
     }
 }
-//endregion
 
-// region MyList
 @Composable
 fun MyList(
     navController: NavController,
@@ -491,560 +486,6 @@ fun MyList(
     }
 }
 
-@Composable
-fun MyListView(
-    navController: NavController,
-    viewmodel: RealmViewmodel,
-    modifier: Modifier = Modifier,
-    selectedFilter: String,
-    bookViewmodel: BookViewModel,
-    movieViewmodel: MovieViewModel,
-    tvViewmodel: TvViewModel
-) {
-    val item by viewmodel.myList.collectAsState()
-    if (item.toList().isNotEmpty()) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
-        ) {
-            items(item) { item ->
-                if (item.contentTye == selectedFilter) {
-                    ListCard(
-                        navController = navController,
-                        item = item,
-                        modifier = Modifier,
-                        realmViewmodel = viewmodel,
-                        bookViewmodel = bookViewmodel,
-                        movieViewModel = movieViewmodel,
-                        tvViewmodel = tvViewmodel
-                    )
-                }
-            }
-        }
-    } else {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(text = "Alle Listen sind leer!")
-        }
-    }
-
-}
-
-@SuppressLint("NewApi")
-@Composable
-fun ListCard(
-    navController: NavController,
-    item: ItemEntity,
-    modifier: Modifier = Modifier,
-    realmViewmodel: RealmViewmodel,
-    bookViewmodel: BookViewModel,
-    movieViewModel: MovieViewModel,
-    tvViewmodel: TvViewModel
-) {
-    val itemType = item.contentTye
-    val itemId = item.contentId
-    val itemTitle = item.contentTitle
-    val itemInfo = item.contentInfo
-    val itemImage = item.contentImg
-
-    LaunchedEffect(itemId) {
-        when (itemType) {
-            "book" -> {
-                bookViewmodel.getBookByID(item.contentId)
-            }
-
-            "movie" -> {
-                movieViewModel.getMovieByID(item.contentId)
-            }
-
-            "tv" -> {
-                tvViewmodel.getTvByID(item.contentId)
-            }
-        }
-    }
-
-    Row(modifier = modifier.heightIn(min = 100.dp)) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 100.dp)
-                .padding(5.dp)
-                .border(3.dp, Color.Black, RoundedCornerShape(25.dp)),
-            colors = CardDefaults.cardColors(containerColor = Color.Black),
-            shape = RoundedCornerShape(25.dp),
-            elevation = CardDefaults.cardElevation(4.dp),
-            onClick = {
-                when (itemType) {
-                    "book" -> navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${itemId}")
-                    "movie" -> navController.navigate("${Destinations.DETAILED_MOVIE_VIEW}/${itemId}")
-                    "tv" -> navController.navigate("${Destinations.DETAILED_TV_VIEW}/${itemId}")
-                }
-            }
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .width(100.dp)
-                        .height(100.dp)
-                        .clip(RoundedCornerShape(25.dp))
-                        .background(Color.LightGray)
-                ) {
-                    itemImage?.let {
-                        Image(
-                            painter = rememberImagePainter(
-                                when (itemType) {
-                                    "book" -> "https://books.google.com/books/content?id=" + item.contentId + "&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
-                                    "movie" -> IMAGE_URL + it
-                                    "tv" -> IMAGE_URL + it
-                                    else -> {}
-                                }
-                            ),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .fillMaxHeight()
-                                .clip(RoundedCornerShape(25.dp)),
-                            contentScale = ContentScale.FillBounds
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.width(16.dp))
-                Column(
-                    modifier = Modifier
-                        .weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = itemTitle,
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodyLarge,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Text(
-                        text = itemInfo,
-                        color = Color.LightGray,
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                }
-                IconButton(
-                    onClick = {
-                        realmViewmodel.deleteItem(item)
-                    },
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete List Item",
-                        tint = Color.Red
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun FilterButton(
-    text: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (isSelected) Color.Black else Color.LightGray
-        ),
-        modifier = Modifier
-            .widthIn(120.dp)
-            .padding(8.dp)
-    ) {
-        Text(
-            text = text,
-            color = if (isSelected) Color.White else Color.Black
-        )
-    }
-}
-
-// endregion
-
-//region search function
-@Composable
-fun Searchbar(navController: NavController) {
-    val viewModel = viewModel<SearchViewModel>()
-    val searchText by viewModel.searchText.collectAsState()
-
-    Spacer(modifier = Modifier.height(16.dp))
-
-    TextField(
-        value = searchText,
-        onValueChange = { newSearchText ->
-            viewModel.onSearchTextChange(newSearchText)
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(25.dp)),
-        placeholder = {
-            Text(
-                text = "Search",
-                style = TextStyle(fontStyle = FontStyle.Italic)
-            )
-        },
-        textStyle = TextStyle(color = Color.White),
-        colors = TextFieldDefaults.textFieldColors(
-            containerColor = Color.Black,
-            cursorColor = Color.White,
-            focusedIndicatorColor = Color.White,
-            unfocusedIndicatorColor = Color.White,
-            unfocusedPlaceholderColor = Color.White
-        ),
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = "Search",
-                tint = Color.White
-            )
-        },
-        trailingIcon = {
-            if (searchText.isNotEmpty()) {
-                IconButton(onClick = { viewModel.onSearchTextChange("") }) {
-                    Icon(
-                        imageVector = Icons.Default.Clear,
-                        contentDescription = "Clear",
-                        tint = Color.White
-                    )
-                }
-            }
-        },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(onSearch = {
-            if(searchText.isNotEmpty()) navController.navigate("searchResult/${searchText}")
-        })
-    )
-}
-
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "StateFlowValueCalledInComposition")
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SearchResultPage(
-    query: String,
-    navController: NavController,
-    viewModel: SearchViewModel = viewModel(),
-    viewmodel: RealmViewmodel
-) {
-    Log.d("SearchResult", "SearchResult composable loaded with query: $query")
-
-    LaunchedEffect(viewModel.searchFilter.value) {
-        when (viewModel.searchFilter.value) {
-            SearchFilter.BOOKS -> viewModel.fetchBooks(query)
-            SearchFilter.MOVIES -> viewModel.fetchMovies(query)
-            SearchFilter.TV_SHOWS -> viewModel.fetchTVShows(query)
-        }
-    }
-
-    val bookSearchResults by viewModel.bookSearchResults.collectAsState()
-    val movieSearchResults by viewModel.movieSearchResults.collectAsState()
-    val tvSearchResults by viewModel.tvSearchResults.collectAsState()
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Ergebnisse für '$query'",
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black,
-                            //textAlign = TextAlign.Center
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                },
-                navigationIcon = {
-                    Box(
-                        modifier = Modifier
-                            .padding(horizontal = 12.dp)
-                            .clip(CircleShape)
-                            .background(Color.Black)
-                    ) {
-                        IconButton(
-                            onClick = { navController.navigateUp() },
-                            modifier = Modifier
-                                .size(36.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Back",
-                                tint = Color.White,
-                            )
-                        }
-                    }
-                },
-            )
-        },
-        content = {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Top,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .background(Color.White, RoundedCornerShape(0.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        item {
-                            Spacer(modifier = Modifier.height(60.dp))
-                        }
-                        Log.d("Filter", "${viewModel.searchFilter.value}")
-                        when (viewModel.searchFilter.value) {
-                            SearchFilter.BOOKS -> {
-                                Log.d("SearchResult", "Displaying book results")
-                                items(bookSearchResults) { book ->
-                                    BookItem(
-                                        book = book,
-                                        navController = navController,
-                                        viewmodel = viewmodel
-                                    )
-                                }
-                            }
-
-                            SearchFilter.MOVIES -> {
-                                Log.d("SearchResult", "Displaying movie results")
-                                items(movieSearchResults) { movie ->
-                                    MovieItem(
-                                        movie = movie,
-                                        navController = navController,
-                                        viewmodel = viewmodel
-                                    )
-                                }
-                            }
-
-                            SearchFilter.TV_SHOWS -> {
-                                Log.d("SearchResult", "Displaying TV show results")
-                                items(tvSearchResults) { tvShow ->
-                                    TVItem(
-                                        tvShow = tvShow,
-                                        navController = navController,
-                                        viewmodel = viewmodel
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    )
-
-}
-
-@Composable
-fun BookItem(book: Book, navController: NavController, viewmodel: RealmViewmodel) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-            .border(3.dp, Color.Black, RoundedCornerShape(25.dp)),
-        colors = CardDefaults.cardColors(containerColor = Color.Black),
-        shape = RoundedCornerShape(25.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
-        onClick = {
-            navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${book.id}");
-            viewmodel.insertHistory("book", book.id.toString())
-        }
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(25.dp))
-                    .background(Color.LightGray)
-            ) {
-                val imageUrl =
-                    "https://books.google.com/books/content?id=${book.id}&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
-                val painter = rememberAsyncImagePainter(model = imageUrl)
-                Image(
-                    painter = painter,
-                    contentDescription = book.title,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(
-                modifier = Modifier
-                    .weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = book.title,
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center
-                )
-
-                Text(
-                    text = book.authors?.get(0).toString(),
-                    color = Color.LightGray,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-            }
-        }
-    }
-}
-
-@Composable
-fun MovieItem(movie: Movie, navController: NavController, viewmodel: RealmViewmodel) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-            .border(3.dp, Color.Black, RoundedCornerShape(25.dp)),
-        colors = CardDefaults.cardColors(containerColor = Color.Black),
-        shape = RoundedCornerShape(25.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
-        onClick = {
-            navController.navigate("${Destinations.DETAILED_MOVIE_VIEW}/${movie.id}");
-            viewmodel.insertHistory("movie", movie.id.toString())
-        }
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(25.dp))
-                    .background(Color.LightGray)
-            ) {
-                val imageUrl = "https://image.tmdb.org/t/p/w500${movie.poster_path}"
-                val painter = rememberAsyncImagePainter(model = imageUrl)
-                Image(
-                    painter = painter,
-                    contentDescription = movie.title,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(
-                modifier = Modifier
-                    .weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = movie?.title.toString(),
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center
-                )
-
-                Text(
-                    text = movie.release_date.toString(),
-                    color = Color.LightGray,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-            }
-        }
-    }
-}
-
-@Composable
-fun TVItem(tvShow: TV, navController: NavController, viewmodel: RealmViewmodel) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
-            .border(3.dp, Color.Black, RoundedCornerShape(25.dp)),
-        colors = CardDefaults.cardColors(containerColor = Color.Black),
-        shape = RoundedCornerShape(25.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
-        onClick = {
-            navController.navigate("${Destinations.DETAILED_TV_VIEW}/${tvShow.id}");
-            viewmodel.insertHistory("tv", tvShow.id.toString())
-        }
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(25.dp))
-                    .background(Color.LightGray)
-            ) {
-                val imageUrl = "https://image.tmdb.org/t/p/w500${tvShow.poster_path}"
-                val painter = rememberAsyncImagePainter(model = imageUrl)
-                Image(
-                    painter = painter,
-                    contentDescription = tvShow.original_name,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(
-                modifier = Modifier
-                    .weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = tvShow.original_name.toString(),
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center
-                )
-
-                Text(
-                    text = tvShow.first_air_date.toString(),
-                    color = Color.LightGray,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-            }
-        }
-    }
-}
-// endregion
-
-//region TrendingPage
 @Composable
 fun TrendingPage(navController: NavController, viewmodel: RealmViewmodel) {
     val context = LocalContext.current
@@ -1163,275 +604,51 @@ fun TrendingPage(navController: NavController, viewmodel: RealmViewmodel) {
         saveSelectedButton(context, selectedButton)
     }
 }
-
-@Composable
-fun MovieList(
-    movies: List<Movie>,
-    modifier: Modifier = Modifier,
-    navController: NavController,
-    viewmodel: RealmViewmodel
-) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        modifier = modifier.padding(8.dp),
-        contentPadding = PaddingValues(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(movies) { movie ->
-            MovieCard(
-                movie = movie,
-                navController = navController,
-                modifier = Modifier.fillMaxWidth(),
-                viewmodel = viewmodel
-            )
-        }
-    }
-}
-
-@Composable
-fun MovieCard(
-    movie: Movie,
-    navController: NavController,
-    modifier: Modifier = Modifier,
-    viewmodel: RealmViewmodel
-) {
-    Card(
-        modifier = modifier.padding(4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Black),
-        shape = RoundedCornerShape(10.dp),
-        onClick = {
-            navController.navigate("${Destinations.DETAILED_MOVIE_VIEW}/${movie.id}");
-            viewmodel.insertHistory("movie", movie.id.toString())
-        }
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(8.dp)
-        ) {
-            val painter = rememberAsyncImagePainter(model = IMAGE_URL + movie.poster_path)
-            Image(
-                painter = painter,
-                contentDescription = movie.title,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .clip(RoundedCornerShape(10.dp)),
-                contentScale = ContentScale.FillBounds
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = if (movie.title?.length!! > 15) movie.title.take(15) + "..." else movie.title.toString(),
-                modifier = Modifier.padding(4.dp),
-                Color.White
-            )
-            Text(text = " " + movie.release_date, color = Color.LightGray)
-        }
-    }
-}
-
-@Composable
-fun TVList(
-    tvs: List<TV>,
-    modifier: Modifier = Modifier,
-    navController: NavController,
-    viewmodel: RealmViewmodel
-) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        modifier = modifier.padding(8.dp),
-        contentPadding = PaddingValues(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(tvs) { tv ->
-            TVCard(
-                tv = tv,
-                navController = navController,
-                modifier = Modifier.fillMaxWidth(),
-                viewmodel = viewmodel
-            )
-        }
-    }
-}
-
-@Composable
-fun TVCard(
-    tv: TV,
-    navController: NavController,
-    modifier: Modifier = Modifier,
-    viewmodel: RealmViewmodel
-) {
-    Card(
-        modifier = modifier.padding(4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Black),
-        shape = RoundedCornerShape(10.dp),
-        onClick = {
-            navController.navigate("${Destinations.DETAILED_TV_VIEW}/${tv.id}");
-            viewmodel.insertHistory("tv", tv.id.toString())
-        }
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(8.dp)
-        ) {
-            val painter = rememberAsyncImagePainter(model = IMAGE_URL + tv.poster_path)
-            Image(
-                painter = painter,
-                contentDescription = tv.original_name,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .clip(RoundedCornerShape(10.dp)),
-                contentScale = ContentScale.FillBounds
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = if (tv.original_name?.length!! > 15) tv.original_name.take(15) + "..." else tv.original_name.toString(),
-                modifier = Modifier.padding(4.dp),
-                Color.White
-            )
-            Text(text = " " + tv.first_air_date, color = Color.LightGray)
-        }
-    }
-}
-
-@Composable
-fun BookList(
-    books: List<Book>,
-    modifier: Modifier = Modifier,
-    navController: NavController,
-    viewmodel: RealmViewmodel
-) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        modifier = modifier.padding(8.dp),
-        contentPadding = PaddingValues(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(books) { book ->
-            BookCard(
-                book = book,
-                navController = navController,
-                modifier = Modifier.fillMaxWidth(),
-                viewmodel = viewmodel
-            )
-        }
-    }
-}
-
-@Composable
-fun BookCard(
-    book: Book,
-    navController: NavController,
-    modifier: Modifier = Modifier,
-    viewmodel: RealmViewmodel
-) {
-    Card(
-        modifier = modifier.padding(4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Black),
-        shape = RoundedCornerShape(10.dp),
-        onClick = {
-            navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${book.id}");
-            viewmodel.insertHistory("book", book.id.toString())
-        }
-    ) {
-        Column(
-            modifier = Modifier.padding(8.dp)
-        ) {
-            val imageUrl =
-                "https://books.google.com/books/content?id=" + book.id + "&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
-            val painter = rememberAsyncImagePainter(model = imageUrl)
-            Image(
-                painter = painter,
-                contentDescription = book.title,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .clip(RoundedCornerShape(10.dp)),
-                contentScale = ContentScale.FillBounds
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = if (book.title.length > 15) book.title.take(15) + "..." else book.title,
-                modifier = Modifier.padding(4.dp),
-                Color.White
-            )
-            Text(text = " " + book.authors?.get(0).toString(), color = Color.LightGray)
-        }
-    }
-}
 //endregion
 
-//region DetailPage
+//region Views
 @Composable
-fun VerticalBookList(
-    books: List<Book>,
-    modifier: Modifier = Modifier,
+fun MyListView(
     navController: NavController,
-    viewmodel: RealmViewmodel
-) {
-    println("VerticalBookList geladen!")
-    LazyRow(
-        modifier = modifier.padding(8.dp),
-        contentPadding = PaddingValues(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(books) { book ->
-            VerticalBookCard(
-                book = book,
-                navController = navController,
-                modifier = Modifier.fillMaxWidth(),
-                viewmodel = viewmodel
-            )
-        }
-    }
-}
-
-@Composable
-fun VerticalBookCard(
-    book: Book,
-    navController: NavController,
+    viewmodel: RealmViewmodel,
     modifier: Modifier = Modifier,
-    viewmodel: RealmViewmodel
+    selectedFilter: String,
+    bookViewmodel: BookViewModel,
+    movieViewmodel: MovieViewModel,
+    tvViewmodel: TvViewModel
 ) {
-    Card(
-        modifier = modifier
-            .padding(4.dp)
-            .width(300.dp)
-            .height(450.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Black),
-        shape = RoundedCornerShape(10.dp),
-        onClick = {
-            navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${book.id}");
-            viewmodel.insertHistory("book", book.id.toString())
-        }
-    ) {
-        Column(
-            modifier = Modifier.padding(8.dp)
+    val item by viewmodel.myList.collectAsState()
+    if (item.toList().isNotEmpty()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp)
         ) {
-            val imageURL =
-                "https://books.google.com/books/content?id=" + book.id + "&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
-            val painter = rememberAsyncImagePainter(model = imageURL)
-            Image(
-                painter = painter,
-                contentDescription = book.title,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(350.dp)
-                    .clip(RoundedCornerShape(10.dp)),
-                contentScale = ContentScale.FillBounds
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = if (book.title.length > 25) book.title.take(15) + "..." else book.title,
-                modifier = Modifier.padding(4.dp),
-                Color.White
-            )
-            Text(text = " " + book.authors?.get(0).toString(), color = Color.LightGray)
+            items(item) { item ->
+                if (item.contentTye == selectedFilter) {
+                    ListCard(
+                        navController = navController,
+                        item = item,
+                        modifier = Modifier,
+                        realmViewmodel = viewmodel,
+                        bookViewmodel = bookViewmodel,
+                        movieViewModel = movieViewmodel,
+                        tvViewmodel = tvViewmodel
+                    )
+                }
+            }
+        }
+    } else {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(text = "Alle Listen sind leer!")
         }
     }
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -1836,6 +1053,609 @@ fun DetailedMovieView(
         }
     )
 }
+//endregion
+
+//region Cards/Items Lists
+@SuppressLint("NewApi")
+@Composable
+fun ListCard(
+    navController: NavController,
+    item: ItemEntity,
+    modifier: Modifier = Modifier,
+    realmViewmodel: RealmViewmodel,
+    bookViewmodel: BookViewModel,
+    movieViewModel: MovieViewModel,
+    tvViewmodel: TvViewModel
+) {
+    val itemType = item.contentTye
+    val itemId = item.contentId
+    val itemTitle = item.contentTitle
+    val itemInfo = item.contentInfo
+    val itemImage = item.contentImg
+
+    LaunchedEffect(itemId) {
+        when (itemType) {
+            "book" -> {
+                bookViewmodel.getBookByID(item.contentId)
+            }
+
+            "movie" -> {
+                movieViewModel.getMovieByID(item.contentId)
+            }
+
+            "tv" -> {
+                tvViewmodel.getTvByID(item.contentId)
+            }
+        }
+    }
+
+    Row(modifier = modifier.heightIn(min = 100.dp)) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 100.dp)
+                .padding(5.dp)
+                .border(3.dp, Color.Black, RoundedCornerShape(25.dp)),
+            colors = CardDefaults.cardColors(containerColor = Color.Black),
+            shape = RoundedCornerShape(25.dp),
+            elevation = CardDefaults.cardElevation(4.dp),
+            onClick = {
+                when (itemType) {
+                    "book" -> navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${itemId}")
+                    "movie" -> navController.navigate("${Destinations.DETAILED_MOVIE_VIEW}/${itemId}")
+                    "tv" -> navController.navigate("${Destinations.DETAILED_TV_VIEW}/${itemId}")
+                }
+            }
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(100.dp)
+                        .height(100.dp)
+                        .clip(RoundedCornerShape(25.dp))
+                        .background(Color.LightGray)
+                ) {
+                    itemImage.let {
+                        Image(
+                            painter = rememberAsyncImagePainter(
+                                when (itemType) {
+                                    "book" -> "https://books.google.com/books/content?id=" + item.contentId + "&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
+                                    "movie" -> IMAGE_URL + it
+                                    "tv" -> IMAGE_URL + it
+                                    else -> {}
+                                }
+                            ),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight()
+                                .clip(RoundedCornerShape(25.dp)),
+                            contentScale = ContentScale.FillBounds
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(
+                    modifier = Modifier
+                        .weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = itemTitle,
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Text(
+                        text = itemInfo,
+                        color = Color.LightGray,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                }
+                IconButton(
+                    onClick = {
+                        realmViewmodel.deleteItem(item)
+                    },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete List Item",
+                        tint = Color.Red
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun BookItem(book: Book, navController: NavController, viewmodel: RealmViewmodel) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .border(3.dp, Color.Black, RoundedCornerShape(25.dp)),
+        colors = CardDefaults.cardColors(containerColor = Color.Black),
+        shape = RoundedCornerShape(25.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        onClick = {
+            navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${book.id}");
+            viewmodel.insertHistory("book", book.id.toString())
+        }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(RoundedCornerShape(25.dp))
+                    .background(Color.LightGray)
+            ) {
+                val imageUrl =
+                    "https://books.google.com/books/content?id=${book.id}&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
+                val painter = rememberAsyncImagePainter(model = imageUrl)
+                Image(
+                    painter = painter,
+                    contentDescription = book.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(
+                modifier = Modifier
+                    .weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = book.title,
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center
+                )
+
+                Text(
+                    text = book.authors?.get(0).toString(),
+                    color = Color.LightGray,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun MovieItem(movie: Movie, navController: NavController, viewmodel: RealmViewmodel) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .border(3.dp, Color.Black, RoundedCornerShape(25.dp)),
+        colors = CardDefaults.cardColors(containerColor = Color.Black),
+        shape = RoundedCornerShape(25.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        onClick = {
+            navController.navigate("${Destinations.DETAILED_MOVIE_VIEW}/${movie.id}");
+            viewmodel.insertHistory("movie", movie.id.toString())
+        }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(RoundedCornerShape(25.dp))
+                    .background(Color.LightGray)
+            ) {
+                val imageUrl = "https://image.tmdb.org/t/p/w500${movie.poster_path}"
+                val painter = rememberAsyncImagePainter(model = imageUrl)
+                Image(
+                    painter = painter,
+                    contentDescription = movie.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(
+                modifier = Modifier
+                    .weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = movie.title.toString(),
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center
+                )
+
+                Text(
+                    text = movie.release_date.toString(),
+                    color = Color.LightGray,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun TVItem(tvShow: TV, navController: NavController, viewmodel: RealmViewmodel) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .border(3.dp, Color.Black, RoundedCornerShape(25.dp)),
+        colors = CardDefaults.cardColors(containerColor = Color.Black),
+        shape = RoundedCornerShape(25.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        onClick = {
+            navController.navigate("${Destinations.DETAILED_TV_VIEW}/${tvShow.id}");
+            viewmodel.insertHistory("tv", tvShow.id.toString())
+        }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(RoundedCornerShape(25.dp))
+                    .background(Color.LightGray)
+            ) {
+                val imageUrl = "https://image.tmdb.org/t/p/w500${tvShow.poster_path}"
+                val painter = rememberAsyncImagePainter(model = imageUrl)
+                Image(
+                    painter = painter,
+                    contentDescription = tvShow.original_name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(
+                modifier = Modifier
+                    .weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = tvShow.original_name.toString(),
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center
+                )
+
+                Text(
+                    text = tvShow.first_air_date.toString(),
+                    color = Color.LightGray,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun MovieList(
+    movies: List<Movie>,
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    viewmodel: RealmViewmodel
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = modifier.padding(8.dp),
+        contentPadding = PaddingValues(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(movies) { movie ->
+            MovieCard(
+                movie = movie,
+                navController = navController,
+                modifier = Modifier.fillMaxWidth(),
+                viewmodel = viewmodel
+            )
+        }
+    }
+}
+
+@Composable
+fun MovieCard(
+    movie: Movie,
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    viewmodel: RealmViewmodel
+) {
+    Card(
+        modifier = modifier.padding(4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Black),
+        shape = RoundedCornerShape(10.dp),
+        onClick = {
+            navController.navigate("${Destinations.DETAILED_MOVIE_VIEW}/${movie.id}");
+            viewmodel.insertHistory("movie", movie.id.toString())
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(8.dp)
+        ) {
+            val painter = rememberAsyncImagePainter(model = IMAGE_URL + movie.poster_path)
+            Image(
+                painter = painter,
+                contentDescription = movie.title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(10.dp)),
+                contentScale = ContentScale.FillBounds
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = if (movie.title?.length!! > 15) movie.title.take(15) + "..." else movie.title.toString(),
+                modifier = Modifier.padding(4.dp),
+                Color.White
+            )
+            Text(text = " " + movie.release_date, color = Color.LightGray)
+        }
+    }
+}
+
+@Composable
+fun TVList(
+    tvs: List<TV>,
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    viewmodel: RealmViewmodel
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = modifier.padding(8.dp),
+        contentPadding = PaddingValues(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(tvs) { tv ->
+            TVCard(
+                tv = tv,
+                navController = navController,
+                modifier = Modifier.fillMaxWidth(),
+                viewmodel = viewmodel
+            )
+        }
+    }
+}
+
+@Composable
+fun TVCard(
+    tv: TV,
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    viewmodel: RealmViewmodel
+) {
+    Card(
+        modifier = modifier.padding(4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Black),
+        shape = RoundedCornerShape(10.dp),
+        onClick = {
+            navController.navigate("${Destinations.DETAILED_TV_VIEW}/${tv.id}");
+            viewmodel.insertHistory("tv", tv.id.toString())
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(8.dp)
+        ) {
+            val painter = rememberAsyncImagePainter(model = IMAGE_URL + tv.poster_path)
+            Image(
+                painter = painter,
+                contentDescription = tv.original_name,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(10.dp)),
+                contentScale = ContentScale.FillBounds
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = if (tv.original_name?.length!! > 15) tv.original_name.take(15) + "..." else tv.original_name.toString(),
+                modifier = Modifier.padding(4.dp),
+                Color.White
+            )
+            Text(text = " " + tv.first_air_date, color = Color.LightGray)
+        }
+    }
+}
+
+@Composable
+fun BookList(
+    books: List<Book>,
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    viewmodel: RealmViewmodel
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = modifier.padding(8.dp),
+        contentPadding = PaddingValues(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(books) { book ->
+            BookCard(
+                book = book,
+                navController = navController,
+                modifier = Modifier.fillMaxWidth(),
+                viewmodel = viewmodel
+            )
+        }
+    }
+}
+
+@Composable
+fun BookCard(
+    book: Book,
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    viewmodel: RealmViewmodel
+) {
+    Card(
+        modifier = modifier.padding(4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Black),
+        shape = RoundedCornerShape(10.dp),
+        onClick = {
+            navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${book.id}");
+            viewmodel.insertHistory("book", book.id.toString())
+        }
+    ) {
+        Column(
+            modifier = Modifier.padding(8.dp)
+        ) {
+            val imageUrl =
+                "https://books.google.com/books/content?id=" + book.id + "&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
+            val painter = rememberAsyncImagePainter(model = imageUrl)
+            Image(
+                painter = painter,
+                contentDescription = book.title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(10.dp)),
+                contentScale = ContentScale.FillBounds
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = if (book.title.length > 15) book.title.take(15) + "..." else book.title,
+                modifier = Modifier.padding(4.dp),
+                Color.White
+            )
+            Text(text = " " + book.authors?.get(0).toString(), color = Color.LightGray)
+        }
+    }
+}
+
+@Composable
+fun VerticalBookList(
+    books: List<Book>,
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    viewmodel: RealmViewmodel
+) {
+    println("VerticalBookList geladen!")
+    LazyRow(
+        modifier = modifier.padding(8.dp),
+        contentPadding = PaddingValues(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(books) { book ->
+            VerticalBookCard(
+                book = book,
+                navController = navController,
+                modifier = Modifier.fillMaxWidth(),
+                viewmodel = viewmodel
+            )
+        }
+    }
+}
+
+@Composable
+fun VerticalBookCard(
+    book: Book,
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    viewmodel: RealmViewmodel
+) {
+    Card(
+        modifier = modifier
+            .padding(4.dp)
+            .width(300.dp)
+            .height(450.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Black),
+        shape = RoundedCornerShape(10.dp),
+        onClick = {
+            navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${book.id}");
+            viewmodel.insertHistory("book", book.id.toString())
+        }
+    ) {
+        Column(
+            modifier = Modifier.padding(8.dp)
+        ) {
+            val imageURL =
+                "https://books.google.com/books/content?id=" + book.id + "&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
+            val painter = rememberAsyncImagePainter(model = imageURL)
+            Image(
+                painter = painter,
+                contentDescription = book.title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(350.dp)
+                    .clip(RoundedCornerShape(10.dp)),
+                contentScale = ContentScale.FillBounds
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = if (book.title.length > 25) book.title.take(15) + "..." else book.title,
+                modifier = Modifier.padding(4.dp),
+                Color.White
+            )
+            Text(text = " " + book.authors?.get(0).toString(), color = Color.LightGray)
+        }
+    }
+}
+//endregion
+
+//region Custom functions/elements
+@Composable
+fun FilterButton(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isSelected) Color.Black else Color.LightGray
+        ),
+        modifier = Modifier
+            .widthIn(120.dp)
+            .padding(8.dp)
+    ) {
+        Text(
+            text = text,
+            color = if (isSelected) Color.White else Color.Black
+        )
+    }
+}
 
 fun removeHtmlTags(htmlText: String): String {
     return Html.fromHtml(htmlText, Html.FROM_HTML_MODE_LEGACY).toString()
@@ -1866,14 +1686,189 @@ private fun launchAmazon(
     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(amazonUrl))
     launcher.launch(intent)
 }
-// endregion
+//endregion
 
-//region History
+//region Search function
+@Composable
+fun Searchbar(navController: NavController) {
+    val viewModel = viewModel<SearchViewModel>()
+    val searchText by viewModel.searchText.collectAsState()
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    TextField(
+        value = searchText,
+        onValueChange = { newSearchText ->
+            viewModel.onSearchTextChange(newSearchText)
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(25.dp)),
+        placeholder = {
+            Text(
+                text = "Search",
+                style = TextStyle(fontStyle = FontStyle.Italic)
+            )
+        },
+        textStyle = TextStyle(color = Color.White),
+        colors = TextFieldDefaults.textFieldColors(
+            containerColor = Color.Black,
+            cursorColor = Color.White,
+            focusedIndicatorColor = Color.White,
+            unfocusedIndicatorColor = Color.White,
+            unfocusedPlaceholderColor = Color.White
+        ),
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = "Search",
+                tint = Color.White
+            )
+        },
+        trailingIcon = {
+            if (searchText.isNotEmpty()) {
+                IconButton(onClick = { viewModel.onSearchTextChange("") }) {
+                    Icon(
+                        imageVector = Icons.Default.Clear,
+                        contentDescription = "Clear",
+                        tint = Color.White
+                    )
+                }
+            }
+        },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = {
+            if(searchText.isNotEmpty()) navController.navigate("searchResult/${searchText}")
+        })
+    )
+}
+
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "StateFlowValueCalledInComposition")
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SearchResultPage(
+    query: String,
+    navController: NavController,
+    viewModel: SearchViewModel = viewModel(),
+    viewmodel: RealmViewmodel
+) {
+    Log.d("SearchResult", "SearchResult composable loaded with query: $query")
+
+    LaunchedEffect(viewModel.searchFilter.value) {
+        when (viewModel.searchFilter.value) {
+            SearchFilter.BOOKS -> viewModel.fetchBooks(query)
+            SearchFilter.MOVIES -> viewModel.fetchMovies(query)
+            SearchFilter.TV_SHOWS -> viewModel.fetchTVShows(query)
+        }
+    }
+
+    val bookSearchResults by viewModel.bookSearchResults.collectAsState()
+    val movieSearchResults by viewModel.movieSearchResults.collectAsState()
+    val tvSearchResults by viewModel.tvSearchResults.collectAsState()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Ergebnisse für '$query'",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black,
+                            //textAlign = TextAlign.Center
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                },
+                navigationIcon = {
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp)
+                            .clip(CircleShape)
+                            .background(Color.Black)
+                    ) {
+                        IconButton(
+                            onClick = { navController.navigateUp() },
+                            modifier = Modifier
+                                .size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color.White,
+                            )
+                        }
+                    }
+                },
+            )
+        },
+        content = {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .background(Color.White, RoundedCornerShape(0.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        item {
+                            Spacer(modifier = Modifier.height(60.dp))
+                        }
+                        Log.d("Filter", "${viewModel.searchFilter.value}")
+                        when (viewModel.searchFilter.value) {
+                            SearchFilter.BOOKS -> {
+                                Log.d("SearchResult", "Displaying book results")
+                                items(bookSearchResults) { book ->
+                                    BookItem(
+                                        book = book,
+                                        navController = navController,
+                                        viewmodel = viewmodel
+                                    )
+                                }
+                            }
+
+                            SearchFilter.MOVIES -> {
+                                Log.d("SearchResult", "Displaying movie results")
+                                items(movieSearchResults) { movie ->
+                                    MovieItem(
+                                        movie = movie,
+                                        navController = navController,
+                                        viewmodel = viewmodel
+                                    )
+                                }
+                            }
+
+                            SearchFilter.TV_SHOWS -> {
+                                Log.d("SearchResult", "Displaying TV show results")
+                                items(tvSearchResults) { tvShow ->
+                                    TVItem(
+                                        tvShow = tvShow,
+                                        navController = navController,
+                                        viewmodel = viewmodel
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
+
+}
+//endregion
+
+//region History function
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun History(navController: NavController, viewmodel: RealmViewmodel) {
     val histories by viewmodel.histories.collectAsState()
-
     Scaffold(
         topBar = {
             TopAppBar(

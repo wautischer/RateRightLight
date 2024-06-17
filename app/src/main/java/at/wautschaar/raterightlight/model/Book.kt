@@ -48,10 +48,7 @@ data class ImageLinks(
 
 @Serializable
 data class SingleBookResponse(
-    val kind: String,
     val id: String,
-    val etag: String,
-    val selfLink: String,
     @SerialName("volumeInfo")
     val volumeInfo: VolumeInfo
 )

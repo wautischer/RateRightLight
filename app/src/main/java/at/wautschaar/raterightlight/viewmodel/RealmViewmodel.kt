@@ -88,7 +88,7 @@ class RealmViewmodel : ViewModel() {
     }
 
     fun deleteHistory(historyToDel: HistoryEntity) {
-        viewModelScope.launch {
+        viewModelScope.launch { //hier wird eine Coroutine im Viewmodel Scope gestartet. Coroutine = Asynchroner ablauf
             realm.write {
                 val h = historyToDel ?: return@write
                 val h_latest = findLatest(h) ?: return@write
