@@ -121,8 +121,24 @@ private const val IMAGE_URL = "https://image.tmdb.org/t/p/original/"
 private var trendingMovieList = emptyList<Movie>()
 private var trendingTVList = emptyList<TV>()
 private var trendingBookList = emptyList<Book>()
+
 //private var history = mutableMapOf<String, String>()
 //private var historyCount = 0
+private const val PREFS_NAME = "com.example.myapp.PREFS_NAME"
+private const val SELECTED_BUTTON_KEY = "SELECTED_BUTTON_KEY"
+
+private fun loadSelectedButton(context: Context): String {
+    val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    return sharedPreferences.getString(SELECTED_BUTTON_KEY, "book") ?: "movie"
+}
+
+private fun saveSelectedButton(context: Context, selectedButton: String) {
+    val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    sharedPreferences.edit {
+        putString(SELECTED_BUTTON_KEY, selectedButton)
+        apply()
+    }
+}
 
 object Destinations {
     const val MY_LIST_ROUTE = "MyList"
@@ -410,7 +426,8 @@ fun MyList(
     tvViewModel: TvViewModel
 ) {
     Log.d("MyList", "MyList composable loaded")
-    var selectedFilter by remember { mutableStateOf("book") }
+    val context = LocalContext.current
+    var selectedButton by rememberSaveable { mutableStateOf(loadSelectedButton(context)) }
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -443,31 +460,34 @@ fun MyList(
             ) {
                 FilterButton(
                     text = "Books",
-                    isSelected = selectedFilter == "book",
-                    onClick = { selectedFilter = "book" }
+                    isSelected = selectedButton == "book",
+                    onClick = { selectedButton = "book" }
                 )
                 FilterButton(
                     text = "Movies",
-                    isSelected = selectedFilter == "movie",
-                    onClick = { selectedFilter = "movie" }
+                    isSelected = selectedButton == "movie",
+                    onClick = { selectedButton = "movie" }
                 )
                 FilterButton(
                     text = "Series",
-                    isSelected = selectedFilter == "tv",
-                    onClick = { selectedFilter = "tv" }
+                    isSelected = selectedButton == "tv",
+                    onClick = { selectedButton = "tv" }
                 )
             }
 
             MyListView(
                 navController = navController,
                 viewmodel = viewmodel,
-                selectedFilter = selectedFilter,
+                selectedFilter = selectedButton,
                 modifier = Modifier.fillMaxWidth(),
                 bookViewmodel = bookViewModel,
                 movieViewmodel = movieViewModel,
                 tvViewmodel = tvViewModel
             )
         }
+    }
+    LaunchedEffect(selectedButton) {
+        saveSelectedButton(context, selectedButton)
     }
 }
 
@@ -480,29 +500,39 @@ fun MyListView(
     bookViewmodel: BookViewModel,
     movieViewmodel: MovieViewModel,
     tvViewmodel: TvViewModel
-
 ) {
     val item by viewmodel.myList.collectAsState()
-
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
-    ) {
-        items(item) { item ->
-            if (item.contentTye == selectedFilter) {
-                ListCard(
-                    navController = navController,
-                    item = item,
-                    modifier = Modifier,
-                    realmViewmodel = viewmodel,
-                    bookViewmodel = bookViewmodel,
-                    movieViewModel = movieViewmodel,
-                    tvViewmodel = tvViewmodel
-                )
+    if (item.toList().isNotEmpty()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp)
+        ) {
+            items(item) { item ->
+                if (item.contentTye == selectedFilter) {
+                    ListCard(
+                        navController = navController,
+                        item = item,
+                        modifier = Modifier,
+                        realmViewmodel = viewmodel,
+                        bookViewmodel = bookViewmodel,
+                        movieViewModel = movieViewmodel,
+                        tvViewmodel = tvViewmodel
+                    )
+                }
             }
         }
+    } else {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(text = "Alle Listen sind leer!")
+        }
     }
+
 }
 
 @SuppressLint("NewApi")
@@ -574,7 +604,7 @@ fun ListCard(
                         Image(
                             painter = rememberImagePainter(
                                 when (itemType) {
-                                    "book" -> "https://books.google.com/books/content?id="+item.contentId+"&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
+                                    "book" -> "https://books.google.com/books/content?id=" + item.contentId + "&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
                                     "movie" -> IMAGE_URL + it
                                     "tv" -> IMAGE_URL + it
                                     else -> {}
@@ -1154,45 +1184,45 @@ fun TrendingPage(navController: NavController, viewmodel: RealmViewmodel) {
                 horizontalArrangement = Arrangement.Center
             ) {
                 Button(
-                    onClick = { selectedButton = "Bücher" },
+                    onClick = { selectedButton = "book" },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (selectedButton == "Bücher") Color.Black else Color.LightGray
+                        containerColor = if (selectedButton == "book") Color.Black else Color.LightGray
                     ),
                     modifier = Modifier.width(120.dp)
                 ) {
                     Text(
-                        text = "Bücher",
-                        color = if (selectedButton == "Bücher") Color.White else Color.Black
+                        text = "Books",
+                        color = if (selectedButton == "book") Color.White else Color.Black
                     )
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Button(
-                    onClick = { selectedButton = "Filme"; },
+                    onClick = { selectedButton = "movie"; },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (selectedButton == "Filme") Color.Black else Color.LightGray
+                        containerColor = if (selectedButton == "movie") Color.Black else Color.LightGray
                     ),
                     modifier = Modifier.width(120.dp)
                 ) {
                     Text(
-                        text = "Filme",
-                        color = if (selectedButton == "Filme") Color.White else Color.Black
+                        text = "Movies",
+                        color = if (selectedButton == "movie") Color.White else Color.Black
                     )
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Button(
-                    onClick = { selectedButton = "Serien"; },
+                    onClick = { selectedButton = "tv"; },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (selectedButton == "Serien") Color.Black else Color.LightGray
+                        containerColor = if (selectedButton == "tv") Color.Black else Color.LightGray
                     ),
                     modifier = Modifier.width(120.dp)
                 ) {
                     Text(
-                        text = "Serien",
-                        color = if (selectedButton == "Serien") Color.White else Color.Black
+                        text = "Series",
+                        color = if (selectedButton == "tv") Color.White else Color.Black
                     )
                 }
             }
@@ -1202,7 +1232,7 @@ fun TrendingPage(navController: NavController, viewmodel: RealmViewmodel) {
 
         Box(modifier = Modifier.fillMaxSize()) {
             when (selectedButton) {
-                "Bücher" -> {
+                "book" -> {
                     BookList(
                         books = trendingBookList,
                         navController = navController,
@@ -1210,7 +1240,7 @@ fun TrendingPage(navController: NavController, viewmodel: RealmViewmodel) {
                     )
                 }
 
-                "Filme" -> {
+                "movie" -> {
                     MovieList(
                         movies = trendingMovieList,
                         navController = navController,
@@ -1218,7 +1248,7 @@ fun TrendingPage(navController: NavController, viewmodel: RealmViewmodel) {
                     )
                 }
 
-                "Serien" -> {
+                "tv" -> {
                     TVList(
                         tvs = trendingTVList,
                         navController = navController,
@@ -1230,22 +1260,6 @@ fun TrendingPage(navController: NavController, viewmodel: RealmViewmodel) {
     }
     LaunchedEffect(selectedButton) {
         saveSelectedButton(context, selectedButton)
-    }
-}
-
-private const val PREFS_NAME = "com.example.myapp.PREFS_NAME"
-private const val SELECTED_BUTTON_KEY = "SELECTED_BUTTON_KEY"
-
-private fun loadSelectedButton(context: Context): String {
-    val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    return sharedPreferences.getString(SELECTED_BUTTON_KEY, "Bücher") ?: "Bücher"
-}
-
-private fun saveSelectedButton(context: Context, selectedButton: String) {
-    val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    sharedPreferences.edit {
-        putString(SELECTED_BUTTON_KEY, selectedButton)
-        apply()
     }
 }
 
@@ -1543,7 +1557,7 @@ fun DetailedBookView(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(book?.title.toString()) },
+                title = { Text(book?.title.toString(), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     Box(
                         modifier = Modifier
@@ -1681,7 +1695,7 @@ fun DetailedTvView(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(tv?.original_name.toString()) },
+                title = { Text(tv?.original_name.toString(), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     Box(
                         modifier = Modifier
@@ -1812,7 +1826,7 @@ fun DetailedMovieView(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(movie?.title.toString()) },
+                title = { Text(movie?.title.toString(), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     Box(
                         modifier = Modifier
@@ -1962,7 +1976,7 @@ fun History(navController: NavController, viewmodel: RealmViewmodel) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Verlauf") },
+                title = { Text("Verlauf", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     Box(
                         modifier = Modifier
@@ -2012,42 +2026,53 @@ fun HistoryView(
 ) {
     val histories by viewModel.histories.collectAsState()
 
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
-    ) {
-        items(histories.take(3)) { history ->
-            HistoryCard(
-                history = history,
-                modifier = Modifier.fillMaxWidth(),
-                viewmodel = viewModel,
-                navController = navController
-            )
-        }
+    if (histories.isNotEmpty()) {
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp)
+        ) {
+            items(histories.take(3)) { history ->
+                HistoryCard(
+                    history = history,
+                    modifier = Modifier.fillMaxWidth(),
+                    viewmodel = viewModel,
+                    navController = navController
+                )
+            }
 
-        if (histories.size >= 3) {
-            item {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 1.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.Black)
-                ) {
-                    Box(
+            if (histories.size >= 3) {
+                item {
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { navController.navigate(Destinations.HISTORY_ROUTE) }
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
+                            .padding(top = 1.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.Black)
                     ) {
-                        Text(
-                            text = "Klicke hier für mehr",
-                            color = Color.White
-                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { navController.navigate(Destinations.HISTORY_ROUTE) }
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Klicke hier für mehr",
+                                color = Color.White
+                            )
+                        }
                     }
                 }
             }
+        }
+    } else {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(text = "Der Verlauf ist leer!")
         }
     }
 }
