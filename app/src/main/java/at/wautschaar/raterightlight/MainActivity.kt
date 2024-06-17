@@ -656,43 +656,6 @@ fun FilterButton(
 fun Searchbar(navController: NavController) {
     val viewModel = viewModel<SearchViewModel>()
     val searchText by viewModel.searchText.collectAsState()
-    val bookData by viewModel.bookData.collectAsState()
-    val movieData by viewModel.movieData.collectAsState()
-    val tvData by viewModel.tvData.collectAsState()
-    val isSearching by viewModel.isSearching.collectAsState()
-    val searchFilter by viewModel.searchFilter.collectAsState()
-
-    /* Filter auf der Homepage
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(25.dp))
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            FilterButton(
-                text = "Bücher",
-                isSelected = searchFilter == SearchFilter.BOOKS,
-                onClick = { viewModel.onSearchFilterChange(SearchFilter.BOOKS) }
-            )
-
-            FilterButton(
-                text = "Filme",
-                isSelected = searchFilter == SearchFilter.MOVIES,
-                onClick = { viewModel.onSearchFilterChange(SearchFilter.MOVIES) }
-            )
-
-            FilterButton(
-                text = "Serien",
-                isSelected = searchFilter == SearchFilter.TV_SHOWS,
-                onClick = { viewModel.onSearchFilterChange(SearchFilter.TV_SHOWS) }
-            )
-        }
-     */
 
     Spacer(modifier = Modifier.height(16.dp))
 
@@ -700,11 +663,6 @@ fun Searchbar(navController: NavController) {
         value = searchText,
         onValueChange = { newSearchText ->
             viewModel.onSearchTextChange(newSearchText)
-            when (searchFilter) {
-                SearchFilter.BOOKS -> viewModel.fetchBooks(newSearchText)
-                SearchFilter.MOVIES -> viewModel.fetchMovies(newSearchText)
-                SearchFilter.TV_SHOWS -> viewModel.fetchTVShows(newSearchText)
-            }
         },
         modifier = Modifier
             .fillMaxWidth()
@@ -744,66 +702,9 @@ fun Searchbar(navController: NavController) {
         singleLine = true,
         keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(onSearch = {
-            when (viewModel.searchFilter.value) {
-                SearchFilter.BOOKS -> viewModel.fetchBooks(searchText)
-                SearchFilter.MOVIES -> viewModel.fetchMovies(searchText)
-                SearchFilter.TV_SHOWS -> viewModel.fetchTVShows(searchText)
-            }
-            navController.navigate("searchResult/${searchText}")
+            if(searchText.isNotEmpty()) navController.navigate("searchResult/${searchText}")
         })
     )
-    /* Vorschläge beim Suchen
-    if (isSearching) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.Center)
-            )
-        }
-    } else {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            when (searchFilter) {
-                SearchFilter.BOOKS -> {
-                    items(bookData) { item ->
-                        Text(
-                            text = "${item.title}",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 10.dp)
-                                .padding(16.dp)
-                        )
-                    }
-                }
-
-                SearchFilter.MOVIES -> {
-                    items(movieData) { item ->
-                        Text(
-                            text = "${item.title}",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 10.dp)
-                                .padding(16.dp)
-                        )
-                    }
-                }
-
-                SearchFilter.TV_SHOWS -> {
-                    items(tvData) { item ->
-                        Text(
-                            text = "${item.original_name}",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 10.dp)
-                                .padding(16.dp)
-                        )
-                    }
-                }
-            }
-        }
-    }
-     */
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "StateFlowValueCalledInComposition")
