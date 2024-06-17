@@ -92,7 +92,6 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.edit
@@ -839,7 +838,7 @@ fun SearchResultPage(
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Bold,
                             color = Color.Black,
-                            textAlign = TextAlign.Center
+                            //textAlign = TextAlign.Center
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -967,8 +966,8 @@ fun BookItem(book: Book, navController: NavController, viewmodel: RealmViewmodel
             Spacer(modifier = Modifier.width(16.dp))
             Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .align(Alignment.CenterVertically)
+                    .weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = book.title,
@@ -976,12 +975,14 @@ fun BookItem(book: Book, navController: NavController, viewmodel: RealmViewmodel
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center
                 )
+
                 Text(
-                    text = book.authors?.joinToString() ?: "Unknown",
+                    text = book.authors?.get(0).toString(),
                     color = Color.LightGray,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center
                 )
+                Spacer(modifier = Modifier.width(16.dp))
             }
         }
     }
@@ -1027,21 +1028,23 @@ fun MovieItem(movie: Movie, navController: NavController, viewmodel: RealmViewmo
             Spacer(modifier = Modifier.width(16.dp))
             Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .align(Alignment.CenterVertically)
+                    .weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = movie.title ?: "Unknown",
+                    text = movie?.title.toString(),
                     color = Color.White,
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center
                 )
+
                 Text(
-                    text = movie.release_date ?: "Unknown",
+                    text = movie.release_date.toString(),
                     color = Color.LightGray,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center
                 )
+                Spacer(modifier = Modifier.width(16.dp))
             }
         }
     }
@@ -1087,23 +1090,23 @@ fun TVItem(tvShow: TV, navController: NavController, viewmodel: RealmViewmodel) 
             Spacer(modifier = Modifier.width(16.dp))
             Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .align(Alignment.CenterVertically)
+                    .weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = tvShow.original_name ?: "Unknown",
+                    text = tvShow.original_name.toString(),
                     color = Color.White,
                     style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    textAlign = TextAlign.Center
                 )
+
                 Text(
-                    text = tvShow.first_air_date ?: "Unknown",
+                    text = tvShow.first_air_date.toString(),
                     color = Color.LightGray,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center
                 )
+                Spacer(modifier = Modifier.width(16.dp))
             }
         }
     }
