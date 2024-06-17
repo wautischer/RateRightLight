@@ -425,8 +425,8 @@ fun MyList(
                     .height(80.dp)
                     .padding(horizontal = 16.dp, vertical = 8.dp)
                     .background(Color.White, RoundedCornerShape(25.dp))
-                    //.border(4.dp, Color.Black, RoundedCornerShape(25.dp)),
-                        ,
+                //.border(4.dp, Color.Black, RoundedCornerShape(25.dp)),
+                ,
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -575,7 +575,7 @@ fun ListCard(
                         Image(
                             painter = rememberImagePainter(
                                 when (itemType) {
-                                    "book" -> it
+                                    "book" -> "https://books.google.com/books/content?id="+item.contentId+"&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
                                     "movie" -> IMAGE_URL + it
                                     "tv" -> IMAGE_URL + it
                                     else -> {}
@@ -620,7 +620,7 @@ fun ListCard(
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Delete List Item",
-                        tint = Color.White
+                        tint = Color.Red
                     )
                 }
             }
@@ -1108,7 +1108,6 @@ fun TVItem(tvShow: TV, navController: NavController, viewmodel: RealmViewmodel) 
         }
     }
 }
-
 // endregion
 
 //region TrendingPage
@@ -1125,7 +1124,26 @@ fun TrendingPage(navController: NavController, viewmodel: RealmViewmodel) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 16.dp),
+                .height(80.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .background(Color.White, RoundedCornerShape(25.dp))
+            //.border(4.dp, Color.Black, RoundedCornerShape(25.dp)),
+            ,
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Trending",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    textAlign = TextAlign.Center
+                )
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             contentAlignment = Alignment.TopCenter
         ) {
             Row(
@@ -1404,9 +1422,9 @@ fun BookCard(
         Column(
             modifier = Modifier.padding(8.dp)
         ) {
-            val imageUrl1 = "https://books.google.com/books/content?id="
-            val imageUrl2 = "&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
-            val painter = rememberAsyncImagePainter(model = imageUrl1 + book.id + imageUrl2)
+            val imageUrl =
+                "https://books.google.com/books/content?id=" + book.id + "&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
+            val painter = rememberAsyncImagePainter(model = imageUrl)
             Image(
                 painter = painter,
                 contentDescription = book.title,
@@ -1553,10 +1571,10 @@ fun DetailedBookView(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 item {
-                    val imageUrl1 = "https://books.google.com/books/content?id="
-                    val imageUrl2 = "&printsec=frontcover&img=1&zoom=3&edge=curl&source=gbs_api"
+                    val imageUrl =
+                        "https://books.google.com/books/content?id=" + book?.id + "&printsec=frontcover&img=1&zoom=3&edge=curl&source=gbs_api"
                     val painter =
-                        rememberAsyncImagePainter(model = imageUrl1 + book?.id + imageUrl2)
+                        rememberAsyncImagePainter(model = imageUrl)
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -2106,71 +2124,96 @@ fun BigHistoryCard(
     viewmodel: RealmViewmodel,
     navController: NavController
 ) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(top = 4.dp)
-            .height(125.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Black),
-        onClick = {
-            when (history.contentTye) {
-                "book" -> {
-                    navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${history.contentId}")
-                }
+    Row(modifier = modifier.heightIn(min = 100.dp)) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 100.dp)
+                .padding(5.dp)
+                .border(3.dp, Color.Black, RoundedCornerShape(25.dp)),
+            colors = CardDefaults.cardColors(containerColor = Color.Black),
+            shape = RoundedCornerShape(25.dp),
+            elevation = CardDefaults.cardElevation(4.dp),
+            onClick = {
+                when (history.contentTye) {
+                    "book" -> {
+                        navController.navigate("${Destinations.DETAILED_BOOK_VIEW}/${history.contentId}")
+                    }
 
-                "movie" -> {
-                    navController.navigate("${Destinations.DETAILED_MOVIE_VIEW}/${history.contentId}")
-                }
+                    "movie" -> {
+                        navController.navigate("${Destinations.DETAILED_MOVIE_VIEW}/${history.contentId}")
+                    }
 
-                "tv" -> {
-                    navController.navigate("${Destinations.DETAILED_TV_VIEW}/${history.contentId}")
+                    "tv" -> {
+                        navController.navigate("${Destinations.DETAILED_TV_VIEW}/${history.contentId}")
+                    }
                 }
             }
-        }
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
         ) {
-            val painter = if (history.contentTye != "book") {
-                rememberAsyncImagePainter(model = IMAGE_URL + history.contentImg)
-            } else {
-                val imageUrl =
-                    "https://books.google.com/books/content?id=" + history.contentId + "&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
-                rememberAsyncImagePainter(model = imageUrl)
-            }
-            Image(
-                painter = painter,
-                contentDescription = history.contentTye + " image"
-            )
-            Text(
-                text = if (history.contentTitle.length > 8) history.contentTitle.take(5) + "..." else history.contentTitle,
-                color = Color.White,
-                modifier = Modifier.padding(start = 16.dp)
-            )
-            Box(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.Center
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                val date =
-                    """${history.timestamp?.dayOfMonth} ${history.timestamp?.month} ${history.timestamp?.year} ${history.timestamp?.hour}:${history.timestamp?.minute}"""
-                Text(
-                    text = date,
-                    color = Color.LightGray,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-            }
-            IconButton(
-                onClick = { viewmodel.deleteHistory(history) },
-                modifier = Modifier.size(36.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete History Item",
-                    tint = Color.Red
-                )
+                Box(
+                    modifier = Modifier
+                        .width(100.dp)
+                        .height(100.dp)
+                        .clip(RoundedCornerShape(25.dp))
+                        .background(Color.LightGray)
+                ) {
+                    val painter = if (history.contentTye != "book") {
+                        rememberAsyncImagePainter(model = IMAGE_URL + history.contentImg)
+                    } else {
+                        val imageUrl =
+                            "https://books.google.com/books/content?id=" + history.contentId + "&printsec=frontcover&img=1&zoom=2&edge=curl&source=gbs_api"
+                        rememberAsyncImagePainter(model = imageUrl)
+                    }
+                    Image(
+                        painter = painter,
+                        contentDescription = history.contentTye + " image",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(25.dp)),
+                        contentScale = ContentScale.FillBounds
+                    )
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(
+                    modifier = Modifier
+                        .weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = history.contentTitle,
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Text(
+                        text = history.contentInfo,
+                        color = Color.LightGray,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                }
+                IconButton(
+                    onClick = {
+                        viewmodel.deleteHistory(history)
+                    },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete List Item",
+                        tint = Color.Red
+                    )
+                }
             }
         }
     }
