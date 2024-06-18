@@ -684,7 +684,7 @@ fun DetailedBookView(
                             .background(Color.Black)
                     ) {
                         IconButton(
-                            onClick = { navController.navigateUp() },
+                            onClick = { navController.navigateUp() }, //popbackstack
                             modifier = Modifier.size(36.dp)
                         ) {
                             Icon(
